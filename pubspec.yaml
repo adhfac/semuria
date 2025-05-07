@@ -1,0 +1,44 @@
+name: semuria
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.5.1
+  shared_preferences: ^2.5.3
+  provider: ^6.1.4
+  flutter_native_splash: ^2.4.4
+  flutter_launcher_icons: ^0.14.3
+  cloud_firestore: ^5.6.7
+  geolocator: ^14.0.0
+  geocoding: ^3.0.0
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.4.0
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets: 
+  - images/hitam.png
+  - images/merah.png
+  - images/putih.png
+  fonts:
+  - family: playpen
+    fonts:
+      - asset: fonts/playpen.ttf
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "images/merah.png"
