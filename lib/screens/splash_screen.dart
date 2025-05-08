@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:semuria/screens/auth_screen.dart';
 import 'package:semuria/screens/home_screen.dart';
 import 'package:semuria/screens/signin_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -42,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen>
       } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const SigninScreen()),
+          MaterialPageRoute(builder: (_) => const StartScreen()),
         );
       }
     });

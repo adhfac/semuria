@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:semuria/screens/edit_profile_screen.dart';
 import 'package:semuria/screens/setting_screen.dart';
 import 'package:semuria/services/user_service.dart';
 
@@ -47,50 +48,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _navigateToEditProfile() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => EditProfileScreen(
+              currentUsername: _userData!['username'],
+              backdropP: _userData!['backdropP'],
+              profileP: _userData!['profileP'],
+            ),
+      ),
+    );
+
+    if (result == true) {
+      _loadUserData(); // refresh data setelah edit
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                PageRouteBuilder(
-                  pageBuilder:
-                      (context, animation, secondaryAnimation) =>
-                          const SettingScreen(),
-                  transitionsBuilder: (
-                    context,
-                    animation,
-                    secondaryAnimation,
-                    child,
-                  ) {
-                    const begin = Offset(1.0, 0.0);
-                    const end = Offset.zero;
-                    var tween = Tween(
-                      begin: begin,
-                      end: end,
-                    ).chain(CurveTween(curve: Curves.easeInOut));
-                    var offsetAnimation = animation.drive(tween);
-                    return SlideTransition(
-                      position: offsetAnimation,
-                      child: child,
-                    );
-                  },
-                ),
-              );
-            },
-            icon: const Icon(Icons.settings_outlined),
-          ),
-        ],
-      ),
-      body:
+      // AppBar has been removed
+      body: Stack(
+        children: [
+          // Main content
           _isLoading
               ? Center(
                 child: CircularProgressIndicator(color: colorScheme.secondary),
@@ -106,6 +90,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               )
               : _buildProfileContent(),
+
+          // Settings button positioned in the top right corner with adaptive coloring
+          Positioned(
+            top:
+                MediaQuery.of(context).padding.top +
+                8, // Account for status bar
+            right: 8,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.7),
+                    Colors.black.withOpacity(0.3),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder:
+                          (context, animation, secondaryAnimation) =>
+                              const SettingScreen(),
+                      transitionsBuilder: (
+                        context,
+                        animation,
+                        secondaryAnimation,
+                        child,
+                      ) {
+                        const begin = Offset(1.0, 0.0);
+                        const end = Offset.zero;
+                        var tween = Tween(
+                          begin: begin,
+                          end: end,
+                        ).chain(CurveTween(curve: Curves.easeInOut));
+                        var offsetAnimation = animation.drive(tween);
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
+                icon: Icon(
+                  Icons.settings_outlined,
+                  color: Colors.white, // Light icon on dark backgrounds
+                  shadows: [
+                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 3),
+                  ],
+                ),
+                iconSize: 24,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -191,115 +243,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  _userData!['email'] ?? 'No Email',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: colorScheme.tertiary.withOpacity(0.7),
-                    fontFamily: 'playpen',
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 16,
+                      color: colorScheme.secondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatAddress(_userData!['address'] ?? ''),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: colorScheme.tertiary.withOpacity(0.7),
+                        fontFamily: 'playpen',
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
-
-                // Address section
-                Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  color: colorScheme.surface,
-                  shadowColor: colorScheme.secondary.withOpacity(0.3),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              color: colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Address',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'playpen',
-                                color: colorScheme.tertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _userData!['address'] ?? 'No Address',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'playpen',
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Account info section
-                Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  color: colorScheme.surface,
-                  shadowColor: colorScheme.secondary.withOpacity(0.3),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              color: colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Account Info',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'playpen',
-                                color: colorScheme.tertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        _userData!['createdAt'] != null
-                            ? Text(
-                              'Member since: ${_formatDate(_userData!['createdAt'])}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'playpen',
-                                color: colorScheme.onSurface,
-                              ),
-                            )
-                            : Text(
-                              'Member since: Unknown',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'playpen',
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                      ],
-                    ),
-                  ),
-                ),
 
                 // Edit profile button
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: _navigateToEditProfile,
                   icon: const Icon(Icons.edit),
                   label: Text(
                     'Edit Profile',
@@ -323,15 +291,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  String _formatDate(dynamic timestamp) {
-    // Handle different types of timestamps from Firestore
-    if (timestamp is DateTime) {
-      return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
-    } else if (timestamp.runtimeType.toString().contains('Timestamp')) {
-      // Convert Firestore Timestamp to DateTime
-      final DateTime dateTime = timestamp.toDate();
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  String _formatAddress(String fullAddress) {
+    // Extract only the administrative area and country from the full address
+    if (fullAddress.isEmpty) {
+      return 'No location';
     }
-    return 'Unknown date';
+
+    // Parse the address which is in format: street, subLocality, locality, administrativeArea, country
+    final addressParts = fullAddress.split(', ');
+
+    // If the address doesn't have enough parts, return what we have
+    if (addressParts.length < 5) {
+      return fullAddress;
+    }
+
+    // Extract administrative area and country (last two parts)
+    final administrativeArea = addressParts[addressParts.length - 2];
+    final country = addressParts[addressParts.length - 1];
+
+    return '$administrativeArea, $country';
   }
 }
