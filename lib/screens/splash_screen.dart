@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:semuria/screens/auth_screen.dart';
 import 'package:semuria/screens/home_screen.dart';
-import 'package:semuria/screens/signin_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
