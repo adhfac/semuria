@@ -1,9 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:semuria/screens/edit_profile_screen.dart';
 import 'package:semuria/screens/setting_screen.dart';
+import 'package:semuria/screens/add_post_screen.dart';
 import 'package:semuria/services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -27,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark, // untuk iOS
+        statusBarBrightness: Brightness.dark,
       ),
     );
   }
@@ -43,7 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _isLoading = false;
       });
-      // Handle error if needed
       print('Error loading user data: $e');
     }
   }
@@ -52,17 +51,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => EditProfileScreen(
-              currentUsername: _userData!['username'],
-              backdropP: _userData!['backdropP'],
-              profileP: _userData!['profileP'],
-            ),
+        builder: (context) => EditProfileScreen(
+          currentUsername: _userData!['username'],
+          backdropP: _userData!['backdropP'],
+          profileP: _userData!['profileP'],
+        ),
       ),
     );
 
     if (result == true) {
-      _loadUserData(); // refresh data setelah edit
+      _loadUserData();
     }
   }
 
@@ -71,31 +69,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      // AppBar has been removed
       body: Stack(
         children: [
-          // Main content
           _isLoading
               ? Center(
-                child: CircularProgressIndicator(color: colorScheme.secondary),
-              )
+                  child:
+                      CircularProgressIndicator(color: colorScheme.secondary),
+                )
               : _userData == null
-              ? Center(
-                child: Text(
-                  'No user data found',
-                  style: TextStyle(
-                    color: colorScheme.tertiary,
-                    fontFamily: 'playpen',
-                  ),
-                ),
-              )
-              : _buildProfileContent(),
+                  ? Center(
+                      child: Text(
+                        'No user data found',
+                        style: TextStyle(
+                          color: colorScheme.tertiary,
+                          fontFamily: 'playpen',
+                        ),
+                      ),
+                    )
+                  : _buildProfileContent(),
 
-          // Settings button positioned in the top right corner with adaptive coloring
+          // Tombol setting di kanan atas
           Positioned(
-            top:
-                MediaQuery.of(context).padding.top +
-                8, // Account for status bar
+            top: MediaQuery.of(context).padding.top + 8,
             right: 8,
             child: Container(
               decoration: BoxDecoration(
@@ -121,21 +116,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     PageRouteBuilder(
-                      pageBuilder:
-                          (context, animation, secondaryAnimation) =>
-                              const SettingScreen(),
-                      transitionsBuilder: (
-                        context,
-                        animation,
-                        secondaryAnimation,
-                        child,
-                      ) {
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const SettingScreen(),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
                         const begin = Offset(1.0, 0.0);
                         const end = Offset.zero;
-                        var tween = Tween(
-                          begin: begin,
-                          end: end,
-                        ).chain(CurveTween(curve: Curves.easeInOut));
+                        var tween = Tween(begin: begin, end: end)
+                            .chain(CurveTween(curve: Curves.easeInOut));
                         var offsetAnimation = animation.drive(tween);
                         return SlideTransition(
                           position: offsetAnimation,
@@ -147,7 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
                 icon: Icon(
                   Icons.settings_outlined,
-                  color: Colors.white, // Light icon on dark backgrounds
+                  color: Colors.white,
                   shadows: [
                     Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 3),
                   ],
@@ -157,6 +145,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+      //tombol add post
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddPostScreen()),
+          );
+        },
+        backgroundColor: colorScheme.secondary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -168,7 +167,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header with backdrop image
           Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.bottomCenter,
@@ -180,20 +178,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: colorScheme.secondary.withOpacity(0.2),
-                  image:
-                      _userData!['backdropP'] != null &&
-                              _userData!['backdropP'].isNotEmpty
-                          ? DecorationImage(
-                            image: MemoryImage(
-                              base64Decode(_userData!['backdropP']),
-                            ),
-                            fit: BoxFit.cover,
-                          )
-                          : null,
+                  image: _userData!['backdropP'] != null &&
+                          _userData!['backdropP'].isNotEmpty
+                      ? DecorationImage(
+                          image: MemoryImage(
+                            base64Decode(_userData!['backdropP']),
+                          ),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
               ),
-
-              // Profile picture
               Positioned(
                 bottom: -60,
                 child: Container(
@@ -204,30 +199,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: CircleAvatar(
                     radius: 60,
                     backgroundColor: colorScheme.surface,
-                    backgroundImage:
-                        _userData!['profileP'] != null &&
-                                _userData!['profileP'].isNotEmpty
-                            ? MemoryImage(base64Decode(_userData!['profileP']))
-                            : null,
-                    child:
-                        _userData!['profileP'] == null ||
-                                _userData!['profileP'].isEmpty
-                            ? Icon(
-                              Icons.person,
-                              size: 60,
-                              color: colorScheme.secondary,
-                            )
-                            : null,
+                    backgroundImage: _userData!['profileP'] != null &&
+                            _userData!['profileP'].isNotEmpty
+                        ? MemoryImage(base64Decode(_userData!['profileP']))
+                        : null,
+                    child: _userData!['profileP'] == null ||
+                            _userData!['profileP'].isEmpty
+                        ? Icon(
+                            Icons.person,
+                            size: 60,
+                            color: colorScheme.secondary,
+                          )
+                        : null,
                   ),
                 ),
               ),
             ],
           ),
-
-          // Space for the overlapping profile picture
           const SizedBox(height: 70),
-
-          // User information section
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -263,9 +252,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-
-                // Edit profile button
-                const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: _navigateToEditProfile,
                   icon: const Icon(Icons.edit),
@@ -292,23 +278,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _formatAddress(String fullAddress) {
-    // Extract only the administrative area and country from the full address
     if (fullAddress.isEmpty) {
       return 'No location';
     }
-
-    // Parse the address which is in format: street, subLocality, locality, administrativeArea, country
     final addressParts = fullAddress.split(', ');
-
-    // If the address doesn't have enough parts, return what we have
     if (addressParts.length < 5) {
       return fullAddress;
     }
-
-    // Extract administrative area and country (last two parts)
     final administrativeArea = addressParts[addressParts.length - 2];
     final country = addressParts[addressParts.length - 1];
-
     return '$administrativeArea, $country';
   }
 }
