@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:semuria/screens/edit_profile_screen.dart';
 import 'package:semuria/screens/setting_screen.dart';
 import 'package:semuria/screens/add_post_screen.dart';
 import 'package:semuria/services/user_service.dart';
+import 'package:semuria/screens/detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,12 +21,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UserService _userService = UserService();
   bool _isLoading = true;
   Map<String, dynamic>? _userData;
+  String? selectedCategory;
+
+  List<String> categories = [
+    'LAPTOP/PC',
+    'PS5',
+    'PS4',
+    'PS3',
+    'PS2',
+    'PS1',
+    'XBOX',
+    'SWITCH',
+    'MOBILE',
+    'LAINNYA',
+  ];
+
+  String formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inSeconds < 60) {
+      return '${diff.inSeconds} secs ago';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes} mins ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours} hrs ago';
+    } else if (diff.inHours < 48) {
+      return '1 day ago';
+    } else {
+      return DateFormat('dd/MM/yyyy').format(dateTime);
+    }
+  }
+
+  void _showCategoryFilter() async {
+    final result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.75,
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 24),
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.clear),
+                  title: const Text('Semua Kategori'),
+                  onTap:
+                      () => Navigator.pop(
+                        context,
+                        null,
+                      ), // Null untuk memilih semua kategori
+                ),
+                const Divider(),
+                ...categories.map(
+                  (category) => ListTile(
+                    title: Text(category),
+                    trailing:
+                        selectedCategory == category
+                            ? Icon(
+                              Icons.check,
+                              color: Theme.of(context).colorScheme.primary,
+                            )
+                            : null,
+                    onTap:
+                        () => Navigator.pop(
+                          context,
+                          category,
+                        ), // Kategori yang dipilih
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (result != null) {
+      setState(() {
+        selectedCategory =
+            result; // Set kategori yang dipilih atau null untuk Semua Kategori
+      });
+    } else {
+      // Jika result adalah null, berarti memilih Semua Kategori
+      setState(() {
+        selectedCategory =
+            null; // Reset ke null untuk menampilkan semua kategori
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
-
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -51,11 +145,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditProfileScreen(
-          currentUsername: _userData!['username'],
-          backdropP: _userData!['backdropP'],
-          profileP: _userData!['profileP'],
-        ),
+        builder:
+            (context) => EditProfileScreen(
+              currentUsername: _userData!['username'],
+              backdropP: _userData!['backdropP'],
+              profileP: _userData!['profileP'],
+            ),
       ),
     );
 
@@ -69,26 +164,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddPostScreen()),
+          );
+        },
+        backgroundColor: colorScheme.secondary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
       body: Stack(
         children: [
-          _isLoading
-              ? Center(
-                  child:
-                      CircularProgressIndicator(color: colorScheme.secondary),
-                )
-              : _userData == null
-                  ? Center(
-                      child: Text(
-                        'No user data found',
-                        style: TextStyle(
-                          color: colorScheme.tertiary,
-                          fontFamily: 'playpen',
-                        ),
-                      ),
-                    )
-                  : _buildProfileContent(),
-
-          // Tombol setting di kanan atas
+          RefreshIndicator(
+            onRefresh: _loadUserData,
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _userData == null
+                    ? const Center(child: Text('No user data found'))
+                    : _buildProfileWithPosts(),
+          ),
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             right: 8,
@@ -100,8 +196,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Colors.white.withOpacity(0.7),
                     Colors.black.withOpacity(0.3),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -116,177 +210,467 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) =>
-                          const SettingScreen(),
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        const begin = Offset(1.0, 0.0);
-                        const end = Offset.zero;
-                        var tween = Tween(begin: begin, end: end)
-                            .chain(CurveTween(curve: Curves.easeInOut));
-                        var offsetAnimation = animation.drive(tween);
+                      pageBuilder:
+                          (context, animation, secondaryAnimation) =>
+                              const SettingScreen(),
+                      transitionsBuilder: (context, animation, _, child) {
                         return SlideTransition(
-                          position: offsetAnimation,
+                          position: animation.drive(
+                            Tween(
+                              begin: const Offset(1.0, 0.0),
+                              end: Offset.zero,
+                            ).chain(CurveTween(curve: Curves.easeInOut)),
+                          ),
                           child: child,
                         );
                       },
                     ),
                   );
                 },
-                icon: Icon(
-                  Icons.settings_outlined,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 3),
-                  ],
-                ),
-                iconSize: 24,
+                icon: const Icon(Icons.settings_outlined, color: Colors.white),
               ),
             ),
           ),
         ],
       ),
-      //tombol add post
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddPostScreen()),
-          );
-        },
-        backgroundColor: colorScheme.secondary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 
-  Widget _buildProfileContent() {
+  Widget _buildProfileWithPosts() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [_buildProfileHeader(), _buildPostsList()],
+    );
+  }
+
+  Widget _buildProfileHeader() {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.bottomCenter,
-            children: [
-              Container(
-                height: 180 + MediaQuery.of(context).padding.top,
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondary.withOpacity(0.2),
-                  image: _userData!['backdropP'] != null &&
-                          _userData!['backdropP'].isNotEmpty
-                      ? DecorationImage(
+    return Column(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            Container(
+              height: 180 + MediaQuery.of(context).padding.top,
+              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+              decoration: BoxDecoration(
+                color: colorScheme.secondary.withOpacity(0.2),
+                image:
+                    _userData!['backdropP'] != null &&
+                            _userData!['backdropP'].isNotEmpty
+                        ? DecorationImage(
                           image: MemoryImage(
                             base64Decode(_userData!['backdropP']),
                           ),
                           fit: BoxFit.cover,
                         )
-                      : null,
-                ),
-              ),
-              Positioned(
-                bottom: -60,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colorScheme.primary, width: 4),
-                  ),
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: colorScheme.surface,
-                    backgroundImage: _userData!['profileP'] != null &&
-                            _userData!['profileP'].isNotEmpty
-                        ? MemoryImage(base64Decode(_userData!['profileP']))
                         : null,
-                    child: _userData!['profileP'] == null ||
-                            _userData!['profileP'].isEmpty
-                        ? Icon(
+              ),
+            ),
+            Positioned(
+              bottom: -60,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colorScheme.primary, width: 4),
+                ),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundColor: colorScheme.surface,
+                  backgroundImage:
+                      _userData!['profileP'] != null &&
+                              _userData!['profileP'].isNotEmpty
+                          ? MemoryImage(base64Decode(_userData!['profileP']))
+                          : null,
+                  child:
+                      _userData!['profileP'] == null ||
+                              _userData!['profileP'].isEmpty
+                          ? Icon(
                             Icons.person,
                             size: 60,
                             color: colorScheme.secondary,
                           )
-                        : null,
+                          : null,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 70),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Text(
+                _userData!['username'] ?? 'No Username',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'playpen',
+                  color: colorScheme.tertiary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: colorScheme.secondary,
                   ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatAddress(_userData!['address'] ?? ''),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: colorScheme.tertiary.withOpacity(0.7),
+                      fontFamily: 'playpen',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _navigateToEditProfile,
+                icon: const Icon(Icons.edit),
+                label: const Text('Edit Profile'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.secondary,
+                  foregroundColor: colorScheme.onSecondary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                  elevation: 3,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 70),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  _userData!['username'] ?? 'No Username',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.tertiary,
-                    fontFamily: 'playpen',
-                  ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPostsList() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+          FirebaseFirestore.instance
+              .collection('products')
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final products =
+            snapshot.data!.docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final category = data['category'] ?? 'Lainnya';
+              final userId = data['userId'] ?? '';
+              return (selectedCategory == null ||
+                      selectedCategory == category) &&
+                  userId == currentUser?.uid;
+            }).toList();
+
+        if (products.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
                   children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 16,
-                      color: colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatAddress(_userData!['address'] ?? ''),
+                    const Text(
+                      "Produk Saya",
                       style: TextStyle(
-                        fontSize: 16,
-                        color: colorScheme.tertiary.withOpacity(0.7),
-                        fontFamily: 'playpen',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.filter_list),
+                      onPressed: _showCategoryFilter,
+                      tooltip: "Filter Kategori",
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: _navigateToEditProfile,
-                  icon: const Icon(Icons.edit),
-                  label: Text(
-                    'Edit Profile',
-                    style: TextStyle(fontFamily: 'playpen'),
+              ),
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: Text("Anda Belum Pernah Menambahkan Produk."),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Text(
+                    "Produk Saya",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.secondary,
-                    foregroundColor: colorScheme.onSecondary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                    elevation: 3,
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: _showCategoryFilter,
+                    tooltip: "Filter Kategori",
+                  ),
+                ],
+              ),
+            ),
+            ...products.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final Timestamp timestamp = data['createdAt'];
+              final createdAt = timestamp.toDate();
+
+              final heroTag =
+                  'semuria-posterImageBase64-${createdAt.millisecondsSinceEpoch}';
+
+              return InkWell(
+                onTap: () {
+                  //   Navigator.push(
+                  //     context,
+                  //     MaterialPageRoute(builder: (context) => DetailScreen()),
+                  //   );
+                },
+                child: Card(
+                  margin: const EdgeInsets.all(10),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (data['posterImageBase64'] != null)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(16),
+                              ),
+                              child: Hero(
+                                tag: heroTag,
+                                child: Image.memory(
+                                  base64Decode(data['posterImageBase64']),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: 180,
+                                ),
+                              ),
+                            ),
+
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  data['category'] ?? 'Lainnya',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            Positioned(
+                              top: 12,
+                              left: 12,
+                              child: InkWell(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text(
+                                          'Konfirmasi Penghapusan',
+                                        ),
+                                        content: const Text(
+                                          'Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () =>
+                                                    Navigator.of(context).pop(),
+                                            child: const Text('Batal'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              FirebaseFirestore.instance
+                                                  .collection('products')
+                                                  .doc(doc.id)
+                                                  .delete()
+                                                  .then((_) {
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                          'Produk berhasil dihapus!',
+                                                        ),
+                                                        backgroundColor:
+                                                            Colors.green,
+                                                      ),
+                                                    );
+
+                                                    Navigator.of(context).pop();
+                                                  })
+                                                  .catchError((error) {
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          'Gagal menghapus produk: $error',
+                                                        ),
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                      ),
+                                                    );
+
+                                                    Navigator.of(context).pop();
+                                                  });
+                                            },
+                                            child: const Text(
+                                              'Hapus',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.9),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              child: Text(
+                                'Rp ${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepOrange,
+                                ),
+                              ),
+                            ),
+
+                            Text(
+                              data['name'] ?? 'Produk Tanpa Nama',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.access_time,
+                                  size: 14,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  formatTime(createdAt),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.person_outline,
+                                  size: 14,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    data['fullName'] ?? 'Anonim',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
+              );
+            }).toList(),
+          ],
+        );
+      },
     );
   }
 
   String _formatAddress(String fullAddress) {
-    if (fullAddress.isEmpty) {
-      return 'No location';
-    }
+    if (fullAddress.isEmpty) return 'No location';
     final addressParts = fullAddress.split(', ');
-    if (addressParts.length < 5) {
-      return fullAddress;
-    }
+    if (addressParts.length < 5) return fullAddress;
     final administrativeArea = addressParts[addressParts.length - 2];
-    final country = addressParts[addressParts.length - 1];
+    final country = addressParts.last;
     return '$administrativeArea, $country';
   }
 }

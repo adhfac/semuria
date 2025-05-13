@@ -1,10 +1,9 @@
 import 'dart:typed_data';
-import 'dart:convert'; 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:semuria/screens/profile_screen.dart';
 
 class AddPostScreen extends StatefulWidget {
   const AddPostScreen({super.key});
@@ -20,8 +19,20 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Uint8List? _posterImage;
   Uint8List? _backdropImage;
-
+  String? _selectedCategory = 'LAPTOP/PC';
   int _selectedIndex = 0;
+  List<String> categories = [
+    'LAPTOP/PC',
+    'PS5',
+    'PS4',
+    'PS3',
+    'PS2',
+    'PS1',
+    'XBOX',
+    'SWITCH',
+    'MOBILE',
+    'LAINNYA',
+  ];
 
   Future<void> _pickImage(bool isPoster) async {
     final ImagePicker picker = ImagePicker();
@@ -59,53 +70,56 @@ class _AddPostScreenState extends State<AddPostScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final uid = user.uid;
-        final fullName = user.displayName ?? 'Unknown';
 
         try {
+          // Fetch the username from Firestore users collection
+          final userDoc =
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(uid)
+                  .get();
+          final username = userDoc.data()?['username'] ?? 'Unknown';
+
           // Encode images to Base64
           final posterBase64 = await _encodeImage(_posterImage);
           final backdropBase64 = await _encodeImage(_backdropImage);
 
           // Simpan data produk ke Firestore
           await FirebaseFirestore.instance.collection('products').add({
-            'name': _nameController.text,
+            'name': _nameController.text.toUpperCase(),
             'description': _descController.text,
             'price': price,
             'posterImageBase64': posterBase64,
             'backdropImageBase64': backdropBase64,
             'createdAt': FieldValue.serverTimestamp(),
             'userId': uid,
-            'fullName': fullName,
+            'category': categories[_selectedIndex],
+            'fullName': username, // now actually the username from Firestore
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-  const SnackBar(
-    content: Text(
-      'Product added successfully!',
-    ),
-    backgroundColor: Color.fromARGB(255, 159, 255, 115),
-  ),
-);
+            const SnackBar(
+              content: Text('Produk berhasil ditambahkan!'),
+              backgroundColor: Color.fromARGB(255, 159, 255, 115),
+            ),
+          );
 
+          await Future.delayed(const Duration(seconds: 2));
 
-await Future.delayed(const Duration(seconds: 2));
-
-Navigator.pushReplacement(
-  context,
-  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-);
-
+          Navigator.pop(context);
         } catch (e) {
-          print('Error uploading product: $e');
+          print('Gagal mengunggah produk: $e');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to add product. Please try again.')),
+            const SnackBar(
+              content: Text('Gagal menambahkan produk. Mohon coba lagi.'),
+            ),
           );
         }
       } else {
-        print("User is not logged in.");
+        print("User Tidak Log In.");
       }
     } else {
-      print("Invalid price input.");
+      print("Harga Produk Tidak Valid.");
     }
   }
 
@@ -119,11 +133,8 @@ Navigator.pushReplacement(
         backgroundColor: Colors.black87,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
-          "Add Produk",
-          style: TextStyle(
-            fontFamily: 'playpen',
-            color: Colors.white,
-          ),
+          "Tambah Produk",
+          style: TextStyle(fontFamily: 'playpen', color: Colors.white),
         ),
         centerTitle: true,
       ),
@@ -140,19 +151,52 @@ Navigator.pushReplacement(
             children: [
               const Icon(Icons.send, size: 48),
               const SizedBox(height: 12),
-              _buildLabel("Please enter the product name."),
+              _buildLabel("Mohon isi Nama Produk."),
               _buildTextField(_nameController),
               const SizedBox(height: 16),
-              _buildLabel("Please enter the product Description."),
+              _buildLabel("Mohon isi deskripsi produk."),
               _buildTextField(_descController, maxLines: 3),
               const SizedBox(height: 16),
-              _buildLabel("Insert product poster."),
-              _buildImageUploader(isPoster: true, image: _posterImage, label: "Upload a poster"),
+              _buildLabel("Pilih Kategori Produk"),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                ),
+                items:
+                    categories.map((category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCategory = value;
+                    _selectedIndex = categories.indexOf(value!);
+                  });
+                },
+              ),
               const SizedBox(height: 16),
-              _buildLabel("Insert product backdrop."),
-              _buildImageUploader(isPoster: false, image: _backdropImage, label: "Upload a backdrop"),
+              _buildLabel("Masukkan Poster Produk."),
+              _buildImageUploader(
+                isPoster: true,
+                image: _posterImage,
+                label: "Unggah Poster",
+              ),
               const SizedBox(height: 16),
-              _buildLabel("Please enter the price"),
+              _buildLabel("Masukkan Backdrop Produk."),
+              _buildImageUploader(
+                isPoster: false,
+                image: _backdropImage,
+                label: "Unggah backdrop",
+              ),
+              const SizedBox(height: 16),
+              _buildLabel("Mohon masukkan harga produk."),
               _buildPriceTextField(),
               const SizedBox(height: 24),
               SizedBox(
@@ -175,37 +219,6 @@ Navigator.pushReplacement(
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: colorScheme.secondary,
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        selectedItemColor: colorScheme.onSecondary,
-        unselectedItemColor: colorScheme.onSecondary.withOpacity(0.6),
-        showSelectedLabels: true,
-        showUnselectedLabels: false,
-        selectedLabelStyle: const TextStyle(
-          fontFamily: 'playpen',
-          fontWeight: FontWeight.bold,
-        ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
     );
   }
 
@@ -224,14 +237,18 @@ Navigator.pushReplacement(
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    TextEditingController controller, {
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
       style: const TextStyle(color: Colors.black),
       decoration: const InputDecoration(
-        hintText: 'Type here',
+        hintText: 'Ketik disini',
         border: OutlineInputBorder(),
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
@@ -267,25 +284,30 @@ Navigator.pushReplacement(
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: image != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.memory(image, fit: BoxFit.cover),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.cloud_upload_outlined, size: 40, color: Colors.grey),
-                  Text(
-                    label,
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                  const Text(
-                    "Drag and drop file here",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
-              ),
+        child:
+            image != null
+                ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(image, fit: BoxFit.cover),
+                )
+                : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
+                    Text(
+                      label,
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    const Text(
+                      "seret dan lepas gambar di sini, atau klik untuk memilih",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
       ),
     );
   }
