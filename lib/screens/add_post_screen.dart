@@ -128,13 +128,22 @@ class _AddPostScreenState extends State<AddPostScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: colorScheme.primary,
       appBar: AppBar(
-        backgroundColor: Colors.black87,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          "Tambah Produk",
-          style: TextStyle(fontFamily: 'playpen', color: Colors.white),
+        backgroundColor: colorScheme.primary,
+        iconTheme: IconThemeData(color: colorScheme.secondary),
+        title: Row(
+          children: [
+            Icon(Icons.send, size: 48, color: colorScheme.onSurface),
+            const SizedBox(width: 8),
+            Text(
+              "Tambah Produk",
+              style: TextStyle(
+                fontFamily: 'playpen',
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
       ),
@@ -142,14 +151,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
         padding: const EdgeInsets.all(16),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.primary,
             borderRadius: BorderRadius.circular(24),
           ),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.send, size: 48),
               const SizedBox(height: 12),
               _buildLabel("Mohon isi Nama Produk."),
               _buildTextField(_nameController),
@@ -202,13 +210,25 @@ class _AddPostScreenState extends State<AddPostScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check),
-                  label: const Text("Submit"),
+                  icon: Icon(Icons.check, color: colorScheme.primary),
+                  label: Text(
+                    "Submit",
+                    style: TextStyle(
+                      fontFamily: 'playpen',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: colorScheme.primary,
+                    ),
+                  ),
                   onPressed: _submitPost,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
+                    backgroundColor: colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(fontSize: 16),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontFamily: 'playpen',
+                      fontWeight: FontWeight.w500,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -223,15 +243,16 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Widget _buildLabel(String text) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w500,
           fontFamily: 'playpen',
           fontSize: 14,
-          color: Colors.black,
+          color: colorScheme.onPrimary,
         ),
       ),
     );
@@ -242,11 +263,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.black),
+      style: TextStyle(color: colorScheme.onPrimary, fontFamily: 'playpen'),
       decoration: const InputDecoration(
         hintText: 'Ketik disini',
         border: OutlineInputBorder(),
@@ -256,10 +278,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Widget _buildPriceTextField() {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextField(
       controller: _priceController,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: const TextStyle(color: Colors.black),
+      style: TextStyle(color: colorScheme.onPrimary, fontFamily: 'playpen'),
       decoration: const InputDecoration(
         hintText: '0',
         prefixText: 'Rp. ',
@@ -274,14 +297,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
     required Uint8List? image,
     required String label,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => _pickImage(isPoster),
       child: Container(
         height: 140,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          border: Border.all(color: Colors.grey),
+          color: colorScheme.primary,
+          border: Border.all(color: colorScheme.onPrimary),
           borderRadius: BorderRadius.circular(12),
         ),
         child:
@@ -293,18 +317,26 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.cloud_upload_outlined,
                       size: 40,
-                      color: Colors.grey,
+                      color: colorScheme.onPrimary,
                     ),
                     Text(
                       label,
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontFamily: 'playpen',
+                        fontSize: 14,
+                      ),
                     ),
-                    const Text(
+                    Text(
                       "seret dan lepas gambar di sini, atau klik untuk memilih",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontFamily: 'playpen',
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),

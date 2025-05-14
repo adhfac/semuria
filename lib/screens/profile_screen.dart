@@ -68,7 +68,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.clear),
-                  title: const Text('Semua Kategori'),
+                  title: Text(
+                    'Semua Kategori',
+                    style: TextStyle(fontFamily: 'playpen'),
+                  ),
                   onTap:
                       () => Navigator.pop(
                         context,
@@ -172,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
         backgroundColor: colorScheme.secondary,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: colorScheme.onPrimary),
       ),
       body: Stack(
         children: [
@@ -356,6 +359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildPostsList() {
     final currentUser = FirebaseAuth.instance.currentUser;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return StreamBuilder<QuerySnapshot>(
       stream:
@@ -394,6 +398,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'playpen',
                       ),
                     ),
                     const Spacer(),
@@ -408,7 +413,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(
-                  child: Text("Anda Belum Pernah Menambahkan Produk."),
+                  child: Text(
+                    "Anda Belum Pernah Menambahkan Produk.",
+                    style: TextStyle(fontFamily: 'playpen'),
+                  ),
                 ),
               ),
             ],
@@ -424,7 +432,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const Text(
                     "Produk Saya",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'playpen',
+                    ),
                   ),
                   const Spacer(),
                   IconButton(
@@ -486,15 +498,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   vertical: 5,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.7),
+                                  color: colorScheme.primary,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   data['category'] ?? 'Lainnya',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimary,
                                     fontWeight: FontWeight.w500,
+                                    fontFamily: 'playpen',
                                   ),
                                 ),
                               ),
@@ -511,16 +524,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       return AlertDialog(
                                         title: const Text(
                                           'Konfirmasi Penghapusan',
+                                          style: TextStyle(
+                                            fontFamily: 'playpen',
+                                          ),
                                         ),
                                         content: const Text(
                                           'Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.',
+                                          style: TextStyle(
+                                            fontFamily: 'playpen',
+                                          ),
                                         ),
                                         actions: [
                                           TextButton(
                                             onPressed:
                                                 () =>
                                                     Navigator.of(context).pop(),
-                                            child: const Text('Batal'),
+                                            child: const Text(
+                                              'Batal',
+                                              style: TextStyle(
+                                                fontFamily: 'playpen',
+                                              ),
+                                            ),
                                           ),
                                           TextButton(
                                             onPressed: () {
@@ -535,6 +559,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                       const SnackBar(
                                                         content: Text(
                                                           'Produk berhasil dihapus!',
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                                'playpen',
+                                                          ),
                                                         ),
                                                         backgroundColor:
                                                             Colors.green,
@@ -550,6 +578,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                       SnackBar(
                                                         content: Text(
                                                           'Gagal menghapus produk: $error',
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                                'playpen',
+                                                          ),
                                                         ),
                                                         backgroundColor:
                                                             Colors.red,
@@ -563,6 +595,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               'Hapus',
                                               style: TextStyle(
                                                 color: Colors.red,
+                                                fontFamily: 'playpen',
                                               ),
                                             ),
                                           ),
@@ -600,6 +633,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
+                                  fontFamily: 'playpen',
                                   color: Colors.deepOrange,
                                 ),
                               ),
@@ -610,6 +644,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: 'playpen',
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -629,6 +664,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
+                                    fontFamily: 'playpen',
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -644,6 +680,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey,
+                                      fontFamily: 'playpen',
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
