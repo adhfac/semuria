@@ -539,14 +539,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             onPressed:
                                                 () =>
                                                     Navigator.of(context).pop(),
-                                            child: const Text(
+                                            child: Text(
                                               'Batal',
                                               style: TextStyle(
                                                 fontFamily: 'playpen',
+                                                color: colorScheme.onPrimary,
                                               ),
                                             ),
                                           ),
-                                          TextButton(
+                                          ElevatedButton(
                                             onPressed: () {
                                               FirebaseFirestore.instance
                                                   .collection('products')
@@ -591,10 +592,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     Navigator.of(context).pop();
                                                   });
                                             },
-                                            child: const Text(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  colorScheme.secondary,
+                                              foregroundColor:
+                                                  colorScheme.onSecondary,
+                                              elevation: 2,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 8,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            child: Text(
                                               'Hapus',
                                               style: TextStyle(
-                                                color: Colors.red,
+                                                color: colorScheme.onPrimary,
                                                 fontFamily: 'playpen',
                                               ),
                                             ),

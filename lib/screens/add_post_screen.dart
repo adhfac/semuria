@@ -72,7 +72,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         final uid = user.uid;
 
         try {
-          // Fetch the username from Firestore users collection
+          // Ambil nama pengguna dari Firestore
           final userDoc =
               await FirebaseFirestore.instance
                   .collection('users')
@@ -94,7 +94,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
             'createdAt': FieldValue.serverTimestamp(),
             'userId': uid,
             'category': categories[_selectedIndex],
-            'fullName': username, // now actually the username from Firestore
+            'fullName': username,
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -131,8 +131,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
       backgroundColor: colorScheme.primary,
       appBar: AppBar(
         backgroundColor: colorScheme.primary,
-        iconTheme: IconThemeData(color: colorScheme.secondary),
+        iconTheme: IconThemeData(color: colorScheme.onPrimary),
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(Icons.send, size: 48, color: colorScheme.onSurface),
             const SizedBox(width: 8),
@@ -269,9 +272,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       style: TextStyle(color: colorScheme.onPrimary, fontFamily: 'playpen'),
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         hintText: 'Ketik disini',
-        border: OutlineInputBorder(),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: colorScheme.onPrimary, width: 1),
+        ),
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
@@ -283,10 +288,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
       controller: _priceController,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       style: TextStyle(color: colorScheme.onPrimary, fontFamily: 'playpen'),
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         hintText: '0',
         prefixText: 'Rp. ',
-        border: OutlineInputBorder(),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: colorScheme.onPrimary, width: 1),
+        ),
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
@@ -329,6 +336,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         fontFamily: 'playpen',
                         fontSize: 14,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     Text(
                       "seret dan lepas gambar di sini, atau klik untuk memilih",
@@ -337,6 +345,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         fontFamily: 'playpen',
                         fontSize: 12,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),

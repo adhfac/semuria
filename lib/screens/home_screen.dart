@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
                   'Keluar Aplikasi?',
                   style: TextStyle(
                     fontFamily: 'playpen',
-                    color: theme.colorScheme.onBackground,
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
                   'Kamu akan meninggalkan aplikasi ini, kamu serius? 😭🙏',
                   style: TextStyle(
                     fontFamily: 'playpen',
-                    color: theme.colorScheme.onBackground,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 actions: [
@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage> {
                       'Batal',
                       style: TextStyle(
                         fontFamily: 'playpen',
-                        color: theme.colorScheme.onBackground,
+                        color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -252,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.primary,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.primary,
         title: Text(
@@ -320,10 +320,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   .snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.amber),
+              return Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.secondary,
+                ),
               );
             }
+
             final products =
                 snapshot.data!.docs.where((doc) {
                   final data = doc.data();
@@ -343,19 +346,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Text(
+                        Text(
                           "Produk",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         ),
                         const Spacer(),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.filter_list,
-                            color: Colors.white70,
+                            color: theme.colorScheme.primary,
                           ),
                           onPressed: _showCategoryFilter,
                           tooltip: "Filter Kategori",
@@ -363,12 +366,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
                     child: Center(
                       child: Text(
                         "Belum Ada Produk di Kategori ini.",
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(color: theme.colorScheme.onPrimary),
                       ),
                     ),
                   ),
@@ -376,30 +379,48 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             }
 
-            // Group products by category
-            Map<String, List<DocumentSnapshot>> productsByCategory = {};
-            for (var product in products) {
-              final data = product.data();
-              final category = data['category'] ?? 'Lainnya';
+            // Find featured products (taking the first 5 or fewer)
+            final featuredProducts = products.take(3).toList();
 
-              if (!productsByCategory.containsKey(category)) {
-                productsByCategory[category] = [];
-              }
-              productsByCategory[category]!.add(product);
-            }
+            // Remaining products for the list view
+            final remainingProducts =
+                products.length > 3 ? products.sublist(3) : [];
 
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ...productsByCategory.entries.map((entry) {
-                      return _buildProductCategory(entry.key, entry.value);
-                    }).toList(),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Featured products carousel
+                  _buildFeaturedCarousel(context, featuredProducts),
+
+                  // Divider
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 4.0,
+                    ),
+                    child: Divider(color: theme.colorScheme.primary),
+                  ),
+
+                  // Remaining products as a list
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18.0,
+                      vertical: 12.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Products list view
+                        ...remainingProducts.map(
+                          (products) =>
+                              _buildProductListItem(context, products),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -407,172 +428,463 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
 
-  Widget _buildProductCategory(String title, List<DocumentSnapshot> products) {
-    final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
-    final accentColor = theme.colorScheme.tertiary;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onBackground,
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 250,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: products.length,
-            itemBuilder: (BuildContext context, int index) {
-              final data = products[index].data() as Map<String, dynamic>;
-              final backdrpImageBase64 = data['backdrpImageBase64'];
-              final description = data['description'];
-              final price = data['price'] ?? 0;
-              final posterImageBase64 = data['posterImageBase64'];
-              final fullName = data['fullName'] ?? 'Anonim';
-              final latitude = data['latitude'];
-              final longitude = data['longitude'];
-              final category = data['category'] ?? 'Lainnya';
-              final Timestamp timestamp = data['createdAt'];
-              final createdAt = timestamp.toDate();
-              final String heroTag =
-                  'semuria-posterImageBase64-${createdAt.millisecondsSinceEpoch}';
+Widget _buildFeaturedCarousel(
+  BuildContext context,
+  List<DocumentSnapshot> products,
+) {
+  if (products.isEmpty) return SizedBox();
+  final theme = Theme.of(context);
 
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => DetailScreen(
-                              backdrpImageBase64: backdrpImageBase64,
-                              posterImageBase64: posterImageBase64,
-                              price: price,
-                              description: description ?? '',
-                              createdAt: createdAt,
-                              fullName: fullName,
-                              latitude: latitude,
-                              longitude: longitude,
-                              category: category,
-                              heroTag: heroTag,
-                            ),
-                      ),
-                    );
-                  },
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          Container(
-                            width: 125,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child:
-                                  data['posterImageBase64'] != null
-                                      ? Hero(
-                                        tag: heroTag,
-                                        child: Image.memory(
-                                          base64Decode(
-                                            data['posterImageBase64'],
-                                          ),
-                                          fit: BoxFit.cover,
-                                          width: 125,
-                                          height: 200,
-                                        ),
-                                      )
-                                      : Container(
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.surface,
-                                        child: Center(
-                                          child: Icon(
-                                            Icons.image_not_supported,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onBackground
-                                                .withOpacity(0.5),
-                                          ),
-                                        ),
-                                      ),
-                            ),
-                          ),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Padding(
+      //   padding: const EdgeInsets.all(20.0),
+      //   child: Text(
+      //     "Featured Games",
+      //     style: TextStyle(
+      //       fontSize: 20,
+      //       fontWeight: FontWeight.bold,
+      //       color: theme.colorScheme.onPrimary,
+      //     ),
+      //   ),
+      // ),
+      Container(
+        height: 300,
+        margin: const EdgeInsets.only(left: 0),
+        child: PageView.builder(
+          itemCount: products.length,
+          controller: PageController(viewportFraction: 0.9),
+          itemBuilder: (context, index) {
+            final data = products[index].data() as Map<String, dynamic>;
+            final backdrpImageBase64 = data['backdrpImageBase64'];
+            final description = data['description'];
+            final price = data['price'] ?? 0;
+            final posterImageBase64 = data['posterImageBase64'];
+            final fullName = data['fullName'] ?? 'Anonim';
+            final latitude = data['latitude'];
+            final longitude = data['longitude'];
+            final category = data['category'] ?? 'Lainnya';
+            final Timestamp timestamp = data['createdAt'];
+            final createdAt = timestamp.toDate();
+            final String heroTag =
+                'semuria-featured-${createdAt.millisecondsSinceEpoch}';
 
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.deepOrange,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: accentColor.withOpacity(0.3),
-                                    blurRadius: 4,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                'Rp ${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => DetailScreen(
+                          backdrpImageBase64: backdrpImageBase64,
+                          posterImageBase64: posterImageBase64,
+                          price: price,
+                          description: description ?? '',
+                          createdAt: createdAt,
+                          fullName: fullName,
+                          latitude: latitude,
+                          longitude: longitude,
+                          category: category,
+                          heroTag: heroTag,
+                        ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7.0,
+                  vertical: 9.0,
+                ),
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black87.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: Offset(0, 3),
                           ),
                         ],
                       ),
-                      SizedBox(height: 5),
-                      Container(
-                        width: 125,
-                        child: Center(
-                          child: Text(
-                            data['name']?.length > 14
-                                ? '${data['name'].substring(0, 10)}...'
-                                : (data['name'] ?? 'Produk'),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onBackground,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Stack(
+                          children: [
+                            data['backdrpImageBase64'] != null
+                                ? Hero(
+                                  tag: heroTag,
+                                  child: Image.memory(
+                                    base64Decode(data['backdrpImageBase64']),
+                                    height: 300,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                                : data['posterImageBase64'] != null
+                                ? Hero(
+                                  tag: heroTag,
+                                  child: Image.memory(
+                                    base64Decode(data['posterImageBase64']),
+                                    height: 300,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                                : Container(
+                                  height: 300,
+                                  width: double.infinity,
+                                  color: theme.colorScheme.primary,
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: theme.colorScheme.onPrimary,
+                                    size: 50,
+                                  ),
+                                ),
+
+                            Container(
+                              height: 300,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.center,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.4),
+                                    Colors.black.withOpacity(0.55),
+                                    Colors.black.withOpacity(0.7),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+
+                            Positioned(
+                              bottom: 16,
+                              left: 20,
+                              right: 20,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        data['name'] ?? 'Produk',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontFamily: 'playpen',
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Container(
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.person_outline,
+                                              size: 14,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              data['fullName'] ?? 'Anonim',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.white,
+                                                fontFamily: 'playpen',
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  theme.colorScheme.secondary,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.onPrimary,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              data['category'] == 'WINDOWS' ||
+                                                      data['category'] ==
+                                                          'LAPTOP/PC'
+                                                  ? Icons.computer
+                                                  : (data['category'] ==
+                                                          'PS4' ||
+                                                      data['category'] ==
+                                                          'PS5' ||
+                                                      data['category'] ==
+                                                          'PS3' ||
+                                                      data['category'] ==
+                                                          'PS2' ||
+                                                      data['category'] == 'PS1')
+                                                  ? Icons.videogame_asset
+                                                  : (data['category'] ==
+                                                      'MOBILE')
+                                                  ? Icons.smartphone
+                                                  : Icons.games,
+                                              color: theme.colorScheme.primary,
+                                              size: 14,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              data['category'] ?? 'Lainnya',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color:
+                                                    theme.colorScheme.primary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildProductListItem(BuildContext context, DocumentSnapshot product) {
+  final data = product.data() as Map<String, dynamic>;
+  final backdrpImageBase64 = data['backdrpImageBase64'];
+  final description = data['description'];
+  final price = data['price'] ?? 0;
+  final posterImageBase64 = data['posterImageBase64'];
+  final fullName = data['fullName'] ?? 'Anonim';
+  final latitude = data['latitude'];
+  final longitude = data['longitude'];
+  final category = data['category'] ?? 'Lainnya';
+  final Timestamp timestamp = data['createdAt'];
+  final createdAt = timestamp.toDate();
+  final String heroTag = 'semuria-list-${createdAt.millisecondsSinceEpoch}';
+  final theme = Theme.of(context);
+
+  return InkWell(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => DetailScreen(
+                backdrpImageBase64: backdrpImageBase64,
+                posterImageBase64: posterImageBase64,
+                price: price,
+                description: description ?? '',
+                createdAt: createdAt,
+                fullName: fullName,
+                latitude: latitude,
+                longitude: longitude,
+                category: category,
+                heroTag: heroTag,
+              ),
+        ),
+      );
+    },
+    child: Container(
+      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      height: 120,
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.onPrimary, width: 1),
+        ),
+      ),
+      child: Expanded(
+        child: Row(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 130,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black87.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child:
+                        data['posterImageBase64'] != null
+                            ? Hero(
+                              tag: heroTag,
+                              child: Image.memory(
+                                base64Decode(data['posterImageBase64']),
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                            : Container(
+                              color: theme.colorScheme.primary,
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    data['name'] ?? 'Produk',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimary,
+                      fontFamily: 'playpen',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        data['category'] == 'WINDOWS' ||
+                                data['category'] == 'LAPTOP/PC'
+                            ? Icons.computer
+                            : (data['category'] == 'PS4' ||
+                                data['category'] == 'PS5' ||
+                                data['category'] == 'PS3' ||
+                                data['category'] == 'PS2' ||
+                                data['category'] == 'PS1')
+                            ? Icons.videogame_asset
+                            : (data['category'] == 'MOBILE')
+                            ? Icons.smartphone
+                            : Icons.games,
+                        color: theme.colorScheme.onPrimary,
+                        size: 14,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        data['category'] ?? 'Lainnya',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onPrimary,
                         ),
                       ),
                     ],
                   ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        size: 14,
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        data['fullName'] ?? 'Anonim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onPrimary,
+                          fontFamily: 'playpen',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 16),
+            // Price
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Text(
+                    'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepOrange,
+                      fontFamily: 'playpen',
+                    ),
+                  ),
                 ),
-              );
-            },
-          ),
+              ],
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ),
+  );
 }
