@@ -20,6 +20,7 @@ class _DetailScreenState extends State<DetailScreen> {
   Map<String, dynamic>? _productData;
   Map<String, dynamic>? _sellerData;
   bool _isFavorite = false;
+  bool _isOwner = false;
 
   @override
   void initState() {
@@ -39,8 +40,10 @@ class _DetailScreenState extends State<DetailScreen> {
 
         if (productDoc.exists) {
           final data = productDoc.data() as Map<String, dynamic>;
+          final currentUser = FirebaseAuth.instance.currentUser;
           setState(() {
             _productData = data;
+            _isOwner = currentUser != null && currentUser.uid == data['userId'];
           });
 
           // Load seller data
@@ -58,8 +61,6 @@ class _DetailScreenState extends State<DetailScreen> {
             }
           }
 
-          // Check if product is in favorites
-          final currentUser = FirebaseAuth.instance.currentUser;
           if (currentUser != null) {
             final favoriteDoc =
                 await FirebaseFirestore.instance
@@ -213,12 +214,55 @@ class _DetailScreenState extends State<DetailScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body:
+      body: Stack(
+        children: [
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _productData == null
               ? const Center(child: Text('Produk tidak ditemukan'))
               : _buildProductDetail(colorScheme),
+          if (!_isLoading && _productData != null && !_isOwner)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Aksi checkout (nanti bisa arahkan ke halaman transaksi)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Fitur checkout belum tersedia.',
+                            style: TextStyle(fontFamily: 'playpen'),
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Checkout Sekarang',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'playpen',
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
