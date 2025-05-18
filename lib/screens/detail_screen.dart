@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:semuria1/screens/checkout_screen.dart';
-import 'package:semuria1/screens/review_screen.dart';
+import 'package:semuria/screens/checkout_screen.dart';
+import 'package:semuria/screens/review_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -23,7 +23,7 @@ class _DetailScreenState extends State<DetailScreen> {
   Map<String, dynamic>? _sellerData;
   bool _isFavorite = false;
   bool _isOwner = false;
-    double _averageRating = 0.0;
+  double _averageRating = 0.0;
   int _reviewCount = 0;
 
   @override
@@ -112,12 +112,14 @@ class _DetailScreenState extends State<DetailScreen> {
       });
     }
   }
+
   Future<void> _loadReviewsData() async {
     if (widget.productId != null) {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('reviews')
-          .where('productId', isEqualTo: widget.productId)
-          .get();
+      final querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('reviews')
+              .where('productId', isEqualTo: widget.productId)
+              .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         double totalRating = 0.0;
@@ -257,40 +259,54 @@ class _DetailScreenState extends State<DetailScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-  onPressed: () {
-  if (_productData != null) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CheckoutScreen(
-          productName: _productData!['name'] ?? 'Unknown Product',
-          platform: _productData!['category'] ?? 'Unknown Platform',
-          price: int.tryParse(_productData!['price'].toString()) ?? 0,
-          sellerName: _sellerData != null ? _sellerData!['username'] ?? 'Unknown Seller' : 'Unknown Seller',
-          imageBase64: _productData!['posterImageBase64'] ?? '', imageUrl: null,
-        ),
-      ),
-    );
-  }
-},
+                    onPressed: () {
+                      if (_productData != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => CheckoutScreen(
+                                  productName:
+                                      _productData!['name'] ??
+                                      'Unknown Product',
+                                  platform:
+                                      _productData!['category'] ??
+                                      'Unknown Platform',
+                                  price:
+                                      int.tryParse(
+                                        _productData!['price'].toString(),
+                                      ) ??
+                                      0,
+                                  sellerName:
+                                      _sellerData != null
+                                          ? _sellerData!['username'] ??
+                                              'Unknown Seller'
+                                          : 'Unknown Seller',
+                                  imageBase64:
+                                      _productData!['posterImageBase64'] ?? '',
+                                  imageUrl: null,
+                                ),
+                          ),
+                        );
+                      }
+                    },
 
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.green,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-  ),
-  child: const Text(
-    'Checkout Sekarang',
-    style: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      fontFamily: 'playpen',
-      color: Colors.white,
-    ),
-  ),
-),
-
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Checkout Sekarang',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'playpen',
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -298,33 +314,33 @@ class _DetailScreenState extends State<DetailScreen> {
       ),
     );
   }
+
   Widget _buildRatingStars(double rating) {
-  // Maksimal 5 bintang
-  int fullStars = rating.floor();
-  bool hasHalfStar = (rating - fullStars) >= 0.5;
-  int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    // Maksimal 5 bintang
+    int fullStars = rating.floor();
+    bool hasHalfStar = (rating - fullStars) >= 0.5;
+    int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
-  List<Widget> stars = [];
+    List<Widget> stars = [];
 
-  for (int i = 0; i < fullStars; i++) {
-    stars.add(const Icon(Icons.star, color: Colors.amber, size: 20));
+    for (int i = 0; i < fullStars; i++) {
+      stars.add(const Icon(Icons.star, color: Colors.amber, size: 20));
+    }
+    if (hasHalfStar) {
+      stars.add(const Icon(Icons.star_half, color: Colors.amber, size: 20));
+    }
+    for (int i = 0; i < emptyStars; i++) {
+      stars.add(const Icon(Icons.star_border, color: Colors.amber, size: 20));
+    }
+
+    return Row(children: stars);
   }
-  if (hasHalfStar) {
-    stars.add(const Icon(Icons.star_half, color: Colors.amber, size: 20));
-  }
-  for (int i = 0; i < emptyStars; i++) {
-    stars.add(const Icon(Icons.star_border, color: Colors.amber, size: 20));
-  }
-
-  return Row(children: stars);
-}
-
 
   Widget _buildProductDetail(ColorScheme colorScheme) {
     final Timestamp timestamp = _productData!['createdAt'] ?? Timestamp.now();
     final DateTime createdAt = timestamp.toDate();
-     final int reviewCount = _productData!['reviewCount'] ?? 0;
-     double rating = 0.0;
+    final int reviewCount = _productData!['reviewCount'] ?? 0;
+    double rating = 0.0;
 
     return CustomScrollView(
       slivers: [
@@ -452,33 +468,35 @@ class _DetailScreenState extends State<DetailScreen> {
                       color: colorScheme.tertiary,
                       fontFamily: 'playpen',
                     ),
-                  ), const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ReviewScreen(productId: widget.productId!),
-                              ),
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              Icon(Icons.star, color: Colors.amber, size: 20),
-                              const SizedBox(width: 4),
-                              Text(
-                                _averageRating.toStringAsFixed(1),
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '($_reviewCount reviews)',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ],
-                          ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  ReviewScreen(productId: widget.productId!),
                         ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Icon(Icons.star, color: Colors.amber, size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          _averageRating.toStringAsFixed(1),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '($_reviewCount reviews)',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
 
                   const SizedBox(height: 12),
                   Row(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:semuria/screens/auth_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:semuria/screens/favorite_screen.dart';
 import 'package:semuria/screens/profile_screen.dart';
 import 'package:semuria/screens/search_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -156,7 +157,7 @@ class _HomePageState extends State<HomePage> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home_rounded),
                   label: 'Home',
-                ), 
+                ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.search_rounded),
                   label: 'Search',
@@ -347,7 +348,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => FavoriteScreen()),
+            );
+          },
         ),
       ),
       body: RefreshIndicator(
@@ -512,7 +518,10 @@ Widget _buildFeaturedCarousel(
                   context,
                   MaterialPageRoute(
                     builder:
-                        (context) => DetailScreen(productId: products[index].id, heroTag: heroTag)
+                        (context) => DetailScreen(
+                          productId: products[index].id,
+                          heroTag: heroTag,
+                        ),
                   ),
                 );
               },
@@ -742,7 +751,8 @@ Widget _buildProductListItem(BuildContext context, DocumentSnapshot product) {
         context,
         MaterialPageRoute(
           builder:
-              (context) => DetailScreen(productId: product.id, heroTag: heroTag)
+              (context) =>
+                  DetailScreen(productId: product.id, heroTag: heroTag),
         ),
       );
     },
@@ -868,23 +878,25 @@ Widget _buildProductListItem(BuildContext context, DocumentSnapshot product) {
             ),
             SizedBox(width: 16),
             // Price
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Text(
-                    'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepOrange,
-                      fontFamily: 'playpen',
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Text(
+                      'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepOrange,
+                        fontFamily: 'playpen',
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
