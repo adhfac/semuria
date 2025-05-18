@@ -175,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
         backgroundColor: colorScheme.secondary,
-        child: Icon(Icons.add, color: colorScheme.onPrimary),
+        child: Icon(Icons.add, color: Colors.white),
       ),
       body: Stack(
         children: [
@@ -339,7 +339,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton.icon(
                 onPressed: _navigateToEditProfile,
                 icon: const Icon(Icons.edit),
-                label: const Text('Edit Profile'),
+                label: const Text(
+                  'Edit Profile',
+                  style: TextStyle(fontFamily: 'playpen'),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.secondary,
                   foregroundColor: colorScheme.onSecondary,
@@ -457,10 +460,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               return InkWell(
                 onTap: () {
-                  //   Navigator.push(
-                  //     context,
-                  //     MaterialPageRoute(builder: (context) => DetailScreen()),
-                  //   );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              DetailScreen(productId: doc.id, heroTag: heroTag),
+                    ),
+                  );
                 },
                 child: Card(
                   margin: const EdgeInsets.all(10),

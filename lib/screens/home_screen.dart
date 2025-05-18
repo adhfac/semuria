@@ -459,14 +459,6 @@ Widget _buildFeaturedCarousel(
           controller: PageController(viewportFraction: 0.9),
           itemBuilder: (context, index) {
             final data = products[index].data() as Map<String, dynamic>;
-            final backdrpImageBase64 = data['backdrpImageBase64'];
-            final description = data['description'];
-            final price = data['price'] ?? 0;
-            final posterImageBase64 = data['posterImageBase64'];
-            final fullName = data['fullName'] ?? 'Anonim';
-            final latitude = data['latitude'];
-            final longitude = data['longitude'];
-            final category = data['category'] ?? 'Lainnya';
             final Timestamp timestamp = data['createdAt'];
             final createdAt = timestamp.toDate();
             final String heroTag =
@@ -478,18 +470,7 @@ Widget _buildFeaturedCarousel(
                   context,
                   MaterialPageRoute(
                     builder:
-                        (context) => DetailScreen(
-                          backdrpImageBase64: backdrpImageBase64,
-                          posterImageBase64: posterImageBase64,
-                          price: price,
-                          description: description ?? '',
-                          createdAt: createdAt,
-                          fullName: fullName,
-                          latitude: latitude,
-                          longitude: longitude,
-                          category: category,
-                          heroTag: heroTag,
-                        ),
+                        (context) => DetailScreen(productId: products[index].id, heroTag: heroTag)
                   ),
                 );
               },
@@ -708,14 +689,6 @@ Widget _buildFeaturedCarousel(
 
 Widget _buildProductListItem(BuildContext context, DocumentSnapshot product) {
   final data = product.data() as Map<String, dynamic>;
-  final backdrpImageBase64 = data['backdrpImageBase64'];
-  final description = data['description'];
-  final price = data['price'] ?? 0;
-  final posterImageBase64 = data['posterImageBase64'];
-  final fullName = data['fullName'] ?? 'Anonim';
-  final latitude = data['latitude'];
-  final longitude = data['longitude'];
-  final category = data['category'] ?? 'Lainnya';
   final Timestamp timestamp = data['createdAt'];
   final createdAt = timestamp.toDate();
   final String heroTag = 'semuria-list-${createdAt.millisecondsSinceEpoch}';
@@ -727,18 +700,7 @@ Widget _buildProductListItem(BuildContext context, DocumentSnapshot product) {
         context,
         MaterialPageRoute(
           builder:
-              (context) => DetailScreen(
-                backdrpImageBase64: backdrpImageBase64,
-                posterImageBase64: posterImageBase64,
-                price: price,
-                description: description ?? '',
-                createdAt: createdAt,
-                fullName: fullName,
-                latitude: latitude,
-                longitude: longitude,
-                category: category,
-                heroTag: heroTag,
-              ),
+              (context) => DetailScreen(productId: product.id, heroTag: heroTag)
         ),
       );
     },
