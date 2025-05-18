@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -187,54 +186,6 @@ class _DetailScreenState extends State<DetailScreen> {
             'Gagal membagikan: $e',
             style: TextStyle(fontFamily: 'playpen'),
           ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _contactSeller() async {
-    if (_productData == null) return;
-
-    final String? whatsappNumber = _productData!['whatsappNumber'];
-    if (whatsappNumber == null || whatsappNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Nomor WhatsApp tidak tersedia',
-            style: TextStyle(fontFamily: 'playpen'),
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    final String productName = _productData!['name'] ?? 'Produk';
-    final String message =
-        'Halo, saya tertarik dengan $productName yang Anda jual di Semuria. Apakah masih tersedia?';
-    final String encodedMessage = Uri.encodeComponent(message);
-    final String whatsappUrl =
-        'https://wa.me/$whatsappNumber?text=$encodedMessage';
-
-    try {
-      if (await canLaunch(whatsappUrl)) {
-        await launch(whatsappUrl);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Tidak dapat membuka WhatsApp',
-              style: TextStyle(fontFamily: 'playpen'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e', style: TextStyle(fontFamily: 'playpen')),
           backgroundColor: Colors.red,
         ),
       );
