@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:semuria/screens/auth_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
                 title: Text(
                   'Keluar Aplikasi?',
                   style: TextStyle(
-                    fontFamily: 'playpen',
+                    fontFamily: 'PlaypenSans', // Corrected font family name
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> {
                 content: Text(
                   'Kamu akan meninggalkan aplikasi ini, kamu serius? 😭🙏',
                   style: TextStyle(
-                    fontFamily: 'playpen',
+                    fontFamily: 'PlaypenSans', // Corrected font family name
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
@@ -70,14 +70,16 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       'Batal',
                       style: TextStyle(
-                        fontFamily: 'playpen',
+                        fontFamily: 'PlaypenSans', // Corrected font family name
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
+                    onPressed:
+                        () =>
+                            SystemNavigator.pop(), // Use SystemNavigator.pop()
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.secondary,
                       foregroundColor: theme.colorScheme.onSecondary,
@@ -93,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                     child: const Text(
                       'Keluar',
                       style: TextStyle(
-                        fontFamily: 'playpen',
+                        fontFamily: 'PlaypenSans', // Corrected font family name
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -103,32 +105,72 @@ class _HomePageState extends State<HomePage> {
         );
 
         if (shouldExit == true) {
-          exit(0);
+          SystemNavigator.pop();
         }
       },
       child: Scaffold(
         body: _screens[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: theme.colorScheme.secondary,
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          selectedItemColor: theme.colorScheme.onSecondary,
-          unselectedItemColor: theme.colorScheme.onSecondary.withOpacity(0.6),
-          showSelectedLabels: true,
-          showUnselectedLabels: false,
-          selectedLabelStyle: const TextStyle(
-            fontFamily: 'playpen',
-            fontWeight: FontWeight.bold,
+        bottomNavigationBar: Container(
+          // Wrap BottomNavigationBar with Container
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              // Add rounded corners to the top
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              // Add a shadow for better separation
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                spreadRadius: 5,
+                blurRadius: 10,
+                offset: const Offset(0, -3), // changes position of shadow
+              ),
+            ],
           ),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          ],
+          child: ClipRRect(
+            // Clip the rounded corners
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            child: BottomNavigationBar(
+              backgroundColor: theme.colorScheme.secondary,
+              currentIndex: _selectedIndex,
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              selectedItemColor: theme.colorScheme.onSecondary,
+              unselectedItemColor: theme.colorScheme.onSecondary.withOpacity(
+                0.6,
+              ),
+              showSelectedLabels: true,
+              showUnselectedLabels: false,
+              selectedLabelStyle: const TextStyle(
+                fontFamily: 'playpen', // Corrected font family name
+                fontWeight: FontWeight.bold,
+              ),
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ), // Use rounded icons
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.search_rounded),
+                  label: 'Search',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+              ],
+              type:
+                  BottomNavigationBarType
+                      .fixed, // Ensure labels are shown if needed
+            ),
+          ),
         ),
       ),
     );
