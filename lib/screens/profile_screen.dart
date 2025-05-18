@@ -569,8 +569,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                             Colors.green,
                                                       ),
                                                     );
-
-                                                    Navigator.of(context).pop();
+                                                    Navigator.of(
+                                                      context,
+                                                    ).pop(); // Tutup dialog setelah berhasil
                                                   })
                                                   .catchError((error) {
                                                     ScaffoldMessenger.of(
@@ -588,8 +589,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                             Colors.red,
                                                       ),
                                                     );
-
-                                                    Navigator.of(context).pop();
+                                                    Navigator.of(
+                                                      context,
+                                                    ).pop(); // Tutup dialog setelah gagal
                                                   });
                                             },
                                             style: ElevatedButton.styleFrom(

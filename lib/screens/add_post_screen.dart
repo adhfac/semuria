@@ -1,9 +1,14 @@
-import 'dart:typed_data';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:typed_data';
+import 'dart:convert';
+import 'package:flutter/services.dart';
+
+const Color primaryColor = Color(0xFFFBF9FA);
+const Color secondaryColor = Color(0xFFA80038);
+const Color accentColor = Color(0xFF2B2024);
 
 class AddPostScreen extends StatefulWidget {
   const AddPostScreen({super.key});
@@ -12,15 +17,21 @@ class AddPostScreen extends StatefulWidget {
   State<AddPostScreen> createState() => _AddPostScreenState();
 }
 
-class _AddPostScreenState extends State<AddPostScreen> {
+class _AddPostScreenState extends State<AddPostScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   Uint8List? _posterImage;
   Uint8List? _backdropImage;
   String? _selectedCategory = 'LAPTOP/PC';
   int _selectedIndex = 0;
+  bool _isSubmitting = false;
   List<String> categories = [
     'LAPTOP/PC',
     'PS5',
@@ -34,10 +45,46 @@ class _AddPostScreenState extends State<AddPostScreen> {
     'LAINNYA',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.65, curve: Curves.easeOut),
+      ),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.2),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.65, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _nameController.dispose();
+    _descController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage(bool isPoster) async {
     final ImagePicker picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
-
     if (file != null) {
       final Uint8List bytes = await file.readAsBytes();
       setState(() {
@@ -54,7 +101,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
     if (image == null) {
       throw Exception("No image selected.");
     }
-
     try {
       final base64Image = base64Encode(image);
       return base64Image;
@@ -65,84 +111,146 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Future<void> _submitPost() async {
+    if (_nameController.text.isEmpty) {
+      _showErrorSnackBar('Nama produk tidak boleh kosong');
+      return;
+    }
+
+    if (_descController.text.isEmpty) {
+      _showErrorSnackBar('Deskripsi produk tidak boleh kosong');
+      return;
+    }
+
+    if (_posterImage == null || _backdropImage == null) {
+      _showErrorSnackBar('Mohon unggah kedua gambar produk');
+      return;
+    }
+
     final price = int.tryParse(_priceController.text.replaceAll('Rp. ', ''));
-    if (price != null) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final uid = user.uid;
+    if (price == null || price <= 0) {
+      _showErrorSnackBar('Harga produk tidak valid');
+      return;
+    }
 
-        try {
-          // Ambil nama pengguna dari Firestore
-          final userDoc =
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(uid)
-                  .get();
-          final username = userDoc.data()?['username'] ?? 'Unknown';
+    setState(() {
+      _isSubmitting = true;
+    });
 
-          // Encode images to Base64
-          final posterBase64 = await _encodeImage(_posterImage);
-          final backdropBase64 = await _encodeImage(_backdropImage);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      try {
+        // Add small delay to show the loading state
+        await Future.delayed(const Duration(milliseconds: 500));
 
-          // Simpan data produk ke Firestore
-          await FirebaseFirestore.instance.collection('products').add({
-            'name': _nameController.text.toUpperCase(),
-            'description': _descController.text,
-            'price': price,
-            'posterImageBase64': posterBase64,
-            'backdropImageBase64': backdropBase64,
-            'createdAt': FieldValue.serverTimestamp(),
-            'userId': uid,
-            'category': categories[_selectedIndex],
-            'fullName': username,
+        final userDoc =
+            await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final username = userDoc.data()?['username'] ?? 'Unknown';
+
+        final posterBase64 = await _encodeImage(_posterImage);
+        final backdropBase64 = await _encodeImage(_backdropImage);
+
+        await FirebaseFirestore.instance.collection('products').add({
+          'name': _nameController.text,
+          'description': _descController.text,
+          'price': price,
+          'posterImageBase64': posterBase64,
+          'backdropImageBase64': backdropBase64,
+          'createdAt': DateTime.now(),
+          'userId': uid,
+          'category': categories[_selectedIndex],
+          'fullName': username,
+        });
+
+        // Success haptic feedback
+        HapticFeedback.mediumImpact();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Text('Produk berhasil ditambahkan!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.all(12),
+          ),
+        );
+
+        await Future.delayed(const Duration(seconds: 1));
+        Navigator.pop(context);
+      } catch (e) {
+        print('Gagal mengunggah produk: $e');
+        _showErrorSnackBar('Gagal menambahkan produk. Mohon coba lagi.');
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
           });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Produk berhasil ditambahkan!'),
-              backgroundColor: Color.fromARGB(255, 159, 255, 115),
-            ),
-          );
-
-          await Future.delayed(const Duration(seconds: 2));
-
-          Navigator.pop(context);
-        } catch (e) {
-          print('Gagal mengunggah produk: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Gagal menambahkan produk. Mohon coba lagi.'),
-            ),
-          );
         }
-      } else {
-        print("User Tidak Log In.");
       }
     } else {
-      print("Harga Produk Tidak Valid.");
+      _showErrorSnackBar('User tidak login. Mohon login terlebih dahulu.');
+      setState(() {
+        _isSubmitting = false;
+      });
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(12),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      backgroundColor: colorScheme.primary,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: colorScheme.primary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onPrimary),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.send, size: 48, color: colorScheme.onSurface),
-            const SizedBox(width: 8),
+            Hero(
+              tag: 'add_icon',
+              child: Icon(
+                Icons.add_box_rounded,
+                size: 32,
+                color: secondaryColor,
+              ),
+            ),
+            const SizedBox(width: 12),
             Text(
               "Tambah Produk",
               style: TextStyle(
                 fontFamily: 'playpen',
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
             ),
@@ -150,152 +258,356 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: colorScheme.primary,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              _buildLabel("Mohon isi Nama Produk."),
-              _buildTextField(_nameController),
-              const SizedBox(height: 16),
-              _buildLabel("Mohon isi deskripsi produk."),
-              _buildTextField(_descController, maxLines: 3),
-              const SizedBox(height: 16),
-              _buildLabel("Pilih Kategori Produk"),
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
+      body: Stack(
+        children: [
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withOpacity(0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(24),
+                  margin: const EdgeInsets.only(top: 10, bottom: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [_buildFormSection()],
                   ),
                 ),
-                items:
-                    categories.map((category) {
-                      return DropdownMenuItem<String>(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = value;
-                    _selectedIndex = categories.indexOf(value!);
-                  });
-                },
               ),
-              const SizedBox(height: 16),
-              _buildLabel("Masukkan Poster Produk."),
-              _buildImageUploader(
-                isPoster: true,
-                image: _posterImage,
-                label: "Unggah Poster",
-              ),
-              const SizedBox(height: 16),
-              _buildLabel("Masukkan Backdrop Produk."),
-              _buildImageUploader(
-                isPoster: false,
-                image: _backdropImage,
-                label: "Unggah backdrop",
-              ),
-              const SizedBox(height: 16),
-              _buildLabel("Mohon masukkan harga produk."),
-              _buildPriceTextField(),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: Icon(Icons.check, color: colorScheme.primary),
-                  label: Text(
-                    "Submit",
-                    style: TextStyle(
-                      fontFamily: 'playpen',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.primary,
-                    ),
+            ),
+          ),
+          if (_isSubmitting)
+            Container(
+              color: Colors.black45,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  onPressed: _submitPost,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'playpen',
-                      fontWeight: FontWeight.w500,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(
+                          color: secondaryColor,
+                          strokeWidth: 4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Menambahkan produk...',
+                        style: TextStyle(
+                          fontFamily: 'playpen',
+                          fontSize: 16,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      bottomNavigationBar: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, 100 * (1 - _animationController.value)),
+            child: child,
+          );
+        },
+        child: Container(
+          color: colorScheme.surface,
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            bottom: 20 + MediaQuery.of(context).padding.bottom,
+            top: 12,
+          ),
+          child: _buildSubmitButton(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFormField(
+          label: "Nama Produk",
+          hint: "Masukkan nama produk",
+          controller: _nameController,
+          icon: Icons.shopping_bag_outlined,
+          required: true,
+        ),
+        const SizedBox(height: 24),
+        _buildFormField(
+          label: "Deskripsi Produk",
+          hint: "Deskripsikan produk Anda dengan detail",
+          controller: _descController,
+          maxLines: 3,
+          icon: Icons.description_outlined,
+          required: true,
+        ),
+        const SizedBox(height: 24),
+        _buildCategorySelector(),
+        const SizedBox(height: 24),
+        _buildImageSection(),
+        const SizedBox(height: 24),
+        _buildFormField(
+          label: "Harga Produk",
+          hint: "0",
+          controller: _priceController,
+          keyboardType: TextInputType.number,
+          prefixText: 'Rp. ',
+          icon: Icons.monetization_on_outlined,
+          required: true,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildFormField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    IconData? icon,
+    String? prefixText,
+    bool required = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 18, color: secondaryColor),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontFamily: 'playpen',
+                fontSize: 16,
+                color: colorScheme.onPrimary,
+              ),
+            ),
+            if (required) ...[
+              const SizedBox(width: 4),
+              Text(
+                '*',
+                style: TextStyle(
+                  color: secondaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
             ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: TextStyle(
+            color: colorScheme.onPrimary,
+            fontFamily: 'playpen',
+            fontSize: 15,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixText: prefixText,
+            filled: true,
+            fillColor: accentColor.withOpacity(0.04),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: secondaryColor, width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            hintStyle: TextStyle(
+              color: colorScheme.onPrimary.withOpacity(0.5),
+              fontFamily: 'playpen',
+            ),
+          ),
+          cursorColor: secondaryColor,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategorySelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.category_outlined, size: 18, color: secondaryColor),
+            const SizedBox(width: 8),
+            Text(
+              "Kategori Produk",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontFamily: 'playpen',
+                fontSize: 16,
+                color: colorScheme.onPrimary,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: secondaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: accentColor.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedCategory,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            icon: Icon(Icons.arrow_drop_down, color: secondaryColor),
+            elevation: 2,
+            dropdownColor: colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            style: TextStyle(
+              color: colorScheme.onPrimary,
+              fontFamily: 'playpen',
+              fontSize: 15,
+            ),
+            items:
+                categories.map((category) {
+                  return DropdownMenuItem<String>(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedCategory = value;
+                _selectedIndex = categories.indexOf(value!);
+              });
+            },
           ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildImageSection() {
     final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          fontFamily: 'playpen',
-          fontSize: 14,
-          color: colorScheme.onPrimary,
-        ),
-      ),
-    );
-  }
 
-  Widget _buildTextField(
-    TextEditingController controller, {
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      style: TextStyle(color: colorScheme.onPrimary, fontFamily: 'playpen'),
-      decoration: InputDecoration(
-        hintText: 'Ketik disini',
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: colorScheme.onPrimary, width: 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.image_outlined, size: 18, color: secondaryColor),
+            const SizedBox(width: 8),
+            Text(
+              "Gambar Produk",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontFamily: 'playpen',
+                fontSize: 16,
+                color: colorScheme.onPrimary,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: secondaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      ),
-    );
-  }
-
-  Widget _buildPriceTextField() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return TextField(
-      controller: _priceController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: TextStyle(color: colorScheme.onPrimary, fontFamily: 'playpen'),
-      decoration: InputDecoration(
-        hintText: '0',
-        prefixText: 'Rp. ',
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: colorScheme.onPrimary, width: 1),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildImageUploader(
+                isPoster: true,
+                image: _posterImage,
+                label: "Poster",
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildImageUploader(
+                isPoster: false,
+                image: _backdropImage,
+                label: "Backdrop",
+              ),
+            ),
+          ],
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          "* Poster akan digunakan sebagai thumbnail dan backdrop sebagai latar detail produk",
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            fontFamily: 'playpen',
+            fontSize: 12,
+            color: colorScheme.onPrimary.withOpacity(0.6),
+          ),
+        ),
+      ],
     );
   }
 
@@ -305,50 +617,183 @@ class _AddPostScreenState extends State<AddPostScreen> {
     required String label,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: () => _pickImage(isPoster),
-      child: Container(
-        height: 140,
-        width: double.infinity,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        height: 170,
         decoration: BoxDecoration(
-          color: colorScheme.primary,
-          border: Border.all(color: colorScheme.onPrimary),
+          color:
+              image != null
+                  ? Colors.transparent
+                  : accentColor.withOpacity(0.04),
+          border: Border.all(
+            color:
+                image != null
+                    ? secondaryColor
+                    : colorScheme.onPrimary.withOpacity(0.2),
+            width: image != null ? 2 : 1,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
-        child:
-            image != null
-                ? ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.memory(image, fit: BoxFit.cover),
-                )
-                : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 40,
-                      color: colorScheme.onPrimary,
-                    ),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: colorScheme.onPrimary,
-                        fontFamily: 'playpen',
-                        fontSize: 14,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child:
+              image != null
+                  ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.memory(image, fit: BoxFit.cover),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 14,
+                                color: Colors.green,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      "seret dan lepas gambar di sini, atau klik untuk memilih",
-                      style: TextStyle(
-                        color: colorScheme.onPrimary,
-                        fontFamily: 'playpen',
-                        fontSize: 12,
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                          child: Text(
+                            'Ketuk untuk ubah',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontFamily: 'playpen',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+                    ],
+                  )
+                  : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cloud_upload_outlined,
+                        size: 36,
+                        color: secondaryColor.withOpacity(0.7),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: colorScheme.onPrimary,
+                          fontFamily: 'playpen',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Text(
+                          "Ketuk untuk unggah",
+                          style: TextStyle(
+                            color: colorScheme.onPrimary.withOpacity(0.6),
+                            fontFamily: 'playpen',
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    bool hasValidInput =
+        _nameController.text.isNotEmpty &&
+        _descController.text.isNotEmpty &&
+        _priceController.text.isNotEmpty &&
+        _posterImage != null &&
+        _backdropImage != null;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.9, end: hasValidInput ? 1.0 : 0.9),
+      duration: const Duration(milliseconds: 300),
+      builder: (context, value, child) {
+        return Transform.scale(scale: value, child: child);
+      },
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitPost,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: secondaryColor,
+          disabledBackgroundColor: secondaryColor.withOpacity(0.5),
+          foregroundColor: colorScheme.surface,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_upload_rounded,
+              color: colorScheme.surface,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              "Tambahkan Produk",
+              style: TextStyle(
+                fontFamily: 'playpen',
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.surface,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
