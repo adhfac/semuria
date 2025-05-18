@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
                 title: Text(
                   'Keluar Aplikasi?',
                   style: TextStyle(
-                    fontFamily: 'PlaypenSans', // Corrected font family name
+                    fontFamily: 'playpen', // Corrected font family name
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> {
                 content: Text(
                   'Kamu akan meninggalkan aplikasi ini, kamu serius? 😭🙏',
                   style: TextStyle(
-                    fontFamily: 'PlaypenSans', // Corrected font family name
+                    fontFamily: 'playpen', // Corrected font family name
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
@@ -70,7 +70,7 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       'Batal',
                       style: TextStyle(
-                        fontFamily: 'PlaypenSans', // Corrected font family name
+                        fontFamily: 'playpen', // Corrected font family name
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w500,
                       ),
@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                     child: const Text(
                       'Keluar',
                       style: TextStyle(
-                        fontFamily: 'PlaypenSans', // Corrected font family name
+                        fontFamily: 'playpen', // Corrected font family name
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -149,14 +149,14 @@ class _HomePageState extends State<HomePage> {
               showSelectedLabels: true,
               showUnselectedLabels: false,
               selectedLabelStyle: const TextStyle(
-                fontFamily: 'playpen', // Corrected font family name
+                fontFamily: 'playpen',
                 fontWeight: FontWeight.bold,
               ),
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home_rounded),
                   label: 'Home',
-                ), // Use rounded icons
+                ), 
                 BottomNavigationBarItem(
                   icon: Icon(Icons.search_rounded),
                   label: 'Search',

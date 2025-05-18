@@ -276,15 +276,15 @@ class _DetailScreenState extends State<DetailScreen> {
           expandedHeight: 300,
           pinned: true,
           flexibleSpace: FlexibleSpaceBar(
-            background:
-                _productData!['posterImageBase64'] != null &&
-                        _productData!['posterImageBase64'].isNotEmpty
-                    ? Hero(
-                      tag: widget.heroTag ?? 'product-image',
-                      child: Image.memory(
-                        base64Decode(_productData!['posterImageBase64']),
-                        fit: BoxFit.cover,
-                      ),
+            background: Stack(
+              children: [
+                _productData!['backdropImageBase64'] != null &&
+                        _productData!['backdropImageBase64'].isNotEmpty
+                    ? Image.memory(
+                      base64Decode(_productData!['backdropImageBase64']),
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
                     )
                     : Container(
                       color: colorScheme.secondary.withOpacity(0.2),
@@ -294,6 +294,43 @@ class _DetailScreenState extends State<DetailScreen> {
                         color: colorScheme.primary.withOpacity(0.5),
                       ),
                     ),
+
+                // Gradient overlay
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.4),
+                        Colors.black,
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Poster kecil dengan Hero tag
+                if (_productData!['posterImageBase64'] != null &&
+                    _productData!['posterImageBase64'].isNotEmpty)
+                  Positioned(
+                    bottom: 16,
+                    left: 16,
+                    child: Hero(
+                      tag: widget.heroTag ?? 'product-image',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.memory(
+                          base64Decode(_productData!['posterImageBase64']),
+                          width: 100,
+                          height: 150,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           actions: [
             IconButton(
@@ -316,16 +353,15 @@ class _DetailScreenState extends State<DetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Price and category
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           'Rp ${NumberFormat('#,###', 'id_ID').format(int.tryParse(_productData!['price']?.toString() ?? '0') ?? 0)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.deepOrange,
+                            color: colorScheme.secondary,
                             fontFamily: 'playpen',
                           ),
                         ),
@@ -351,8 +387,6 @@ class _DetailScreenState extends State<DetailScreen> {
                       ),
                     ],
                   ),
-
-                  // Title
                   const SizedBox(height: 12),
                   Text(
                     _productData!['name'] ?? 'Produk Tanpa Nama',
@@ -363,8 +397,6 @@ class _DetailScreenState extends State<DetailScreen> {
                       fontFamily: 'playpen',
                     ),
                   ),
-
-                  // Posted time and condition
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -384,13 +416,9 @@ class _DetailScreenState extends State<DetailScreen> {
                       ),
                     ],
                   ),
-
-                  // Divider
                   const SizedBox(height: 16),
                   Divider(color: Colors.grey[300], thickness: 1),
                   const SizedBox(height: 16),
-
-                  // Description section
                   const Text(
                     'Deskripsi',
                     style: TextStyle(
@@ -409,8 +437,6 @@ class _DetailScreenState extends State<DetailScreen> {
                       height: 1.5,
                     ),
                   ),
-
-                  // Seller section
                   const SizedBox(height: 24),
                   Divider(color: Colors.grey[300], thickness: 1),
                   const SizedBox(height: 16),
@@ -423,8 +449,6 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Seller info card
                   _buildSellerCard(colorScheme),
                 ],
               ),
