@@ -438,7 +438,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             color: theme.colorScheme.onBackground,
           ),
           onPressed: () {
-            Navigator.of(context).pop(); 
+            Navigator.of(context).pop();
           },
         ),
         title: Text(
@@ -482,7 +482,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: theme.colorScheme.onBackground.withOpacity(0.3),
+                          color: theme.colorScheme.onBackground.withOpacity(
+                            0.3,
+                          ),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(

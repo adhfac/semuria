@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:semuria/screens/checkout_screen.dart';
+import 'package:semuria/screens/full_image_screen.dart';
 import 'package:semuria/screens/review_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -137,6 +138,18 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  Future<void> _refreshData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _loadProductData();
+    await _loadReviewsData();
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
   Future<void> _toggleFavorite() async {
     if (widget.productId == null) return;
 
@@ -243,74 +256,83 @@ class _DetailScreenState extends State<DetailScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _productData == null
-              ? const Center(child: Text('Produk tidak ditemukan'))
-              : _buildProductDetail(colorScheme),
-          if (!_isLoading && _productData != null && !_isOwner)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_productData != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => CheckoutScreen(
-                                  productName:
-                                      _productData!['name'] ??
-                                      'Unknown Product',
-                                  platform:
-                                      _productData!['category'] ??
-                                      'Unknown Platform',
-                                  price:
-                                      int.tryParse(
-                                        _productData!['price'].toString(),
-                                      ) ??
-                                      0,
-                                  sellerName:
-                                      _sellerData != null
-                                          ? _sellerData!['username'] ??
-                                              'Unknown Seller'
-                                          : 'Unknown Seller',
-                                  imageBase64:
-                                      _productData!['posterImageBase64'] ?? '',
-                                  imageUrl: null,
-                                ),
-                          ),
-                        );
-                      }
-                    },
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: Stack(
+          children: [
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _productData == null
+                ? Center(
+                  child: Text(
+                    'Produk tidak ditemukan',
+                    style: TextStyle(fontFamily: 'playpen'),
+                  ),
+                )
+                : _buildProductDetail(colorScheme),
+            if (!_isLoading && _productData != null && !_isOwner)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_productData != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => CheckoutScreen(
+                                    productName:
+                                        _productData!['name'] ??
+                                        'Produk Tanpa Nama',
+                                    platform:
+                                        _productData!['category'] ??
+                                        'Platform tidak diketahui',
+                                    price:
+                                        int.tryParse(
+                                          _productData!['price'].toString(),
+                                        ) ??
+                                        0,
+                                    sellerName:
+                                        _sellerData != null
+                                            ? _sellerData!['username'] ??
+                                                'Penjual tidak diketahui'
+                                            : 'Penjual tidak diketahui',
+                                    imageBase64:
+                                        _productData!['posterImageBase64'] ??
+                                        '',
+                                    imageUrl: null,
+                                  ),
+                            ),
+                          );
+                        }
+                      },
 
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      'Checkout Sekarang',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'playpen',
-                        color: Colors.white,
+                      child: const Text(
+                        'Checkout Sekarang',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'playpen',
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -388,17 +410,51 @@ class _DetailScreenState extends State<DetailScreen> {
                   Positioned(
                     bottom: 16,
                     left: 16,
-                    child: Hero(
-                      tag: widget.heroTag ?? 'product-image',
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.memory(
-                          base64Decode(_productData!['posterImageBase64']),
-                          width: 100,
-                          height: 150,
-                          fit: BoxFit.cover,
+                    child: Stack(
+                      children: [
+                        Hero(
+                          tag: widget.heroTag ?? 'product-image',
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              base64Decode(_productData!['posterImageBase64']),
+                              width: 100,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                      ),
+                        Positioned(
+                          right: 4,
+                          top: 4,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => FullscreenImageScreen(
+                                        imageBase64:
+                                            _productData!['posterImageBase64'],
+                                      ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black45,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.fullscreen,
+                                color: Colors.white,
+                                size: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],

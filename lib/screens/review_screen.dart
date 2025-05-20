@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'add_review_screen.dart';
+import 'package:semuria/screens/add_review_screen.dart';
+import 'dart:convert';
 
 class ReviewScreen extends StatefulWidget {
   final String productId;
@@ -21,17 +21,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (doc.exists) {
       return doc.data()!;
     }
-    return {'displayName': 'Anonymous', 'photoURL': null};
+    return {'displayName': 'fullName', 'photoURL': null};
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ulasan Produk'),
-      ),
+      appBar: AppBar(title: const Text('Ulasan Produk')),
       body: StreamBuilder<QuerySnapshot>(
-        stream: reviewCollection.where('productId', isEqualTo: widget.productId).snapshots(),
+        stream:
+            reviewCollection
+                .where('productId', isEqualTo: widget.productId)
+                .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -43,7 +45,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
           final reviews = snapshot.data?.docs ?? [];
 
           if (reviews.isEmpty) {
-            return const Center(child: Text('Belum ada ulasan untuk produk ini.'));
+            return const Center(
+              child: Text('Belum ada ulasan untuk produk ini.'),
+            );
           }
 
           return ListView.separated(
@@ -51,7 +55,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
             separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final review = reviews[index].data() as Map<String, dynamic>;
-              final String reviewId = reviews[index].id;
               final String userId = review['userId'] ?? 'unknown';
               final int rating = review['rating'] ?? 0;
               final String komentar = review['komentar'] ?? '-';
@@ -66,15 +69,31 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     );
                   }
 
-                  final userData = userSnapshot.data!;
-                  final displayName = userData['displayName'] ?? 'Anonymous';
-                  final photoURL = userData['photoURL'];
+                  final _userData = userSnapshot.data!;
+                  final displayName = _userData['username'] ?? 'Anonymous';
 
                   return ListTile(
+                    contentPadding: const EdgeInsets.only(
+                      top: 16,
+                      left: 24,
+                      right: 24,
+                    ),
                     leading: CircleAvatar(
-                      backgroundImage: photoURL != null
-                          ? NetworkImage(photoURL)
-                          : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                      radius: 27,
+                      backgroundImage:
+                          _userData['profileP'] != null &&
+                                  _userData['profileP'].isNotEmpty
+                              ? MemoryImage(base64Decode(_userData['profileP']))
+                              : null,
+                      child:
+                          _userData['profileP'] == null ||
+                                  _userData['profileP'].isEmpty
+                              ? Icon(
+                                Icons.person,
+                                size: 60,
+                                color: theme.secondary,
+                              )
+                              : null,
                     ),
                     title: Text(displayName),
                     subtitle: Text(komentar),
@@ -95,7 +114,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddReviewScreen(productId: widget.productId),
+              builder:
+                  (context) => AddReviewScreen(productId: widget.productId),
             ),
           );
           if (result == true) {

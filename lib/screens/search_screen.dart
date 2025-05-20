@@ -159,7 +159,6 @@ class _SearchScreenState extends State<SearchScreen> {
                         }
                       }
 
-                      // Using custom layout instead of ListTile's constraints
                       return InkWell(
                         onTap: () {
                           Navigator.push(
@@ -178,36 +177,36 @@ class _SearchScreenState extends State<SearchScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SizedBox(
-                                width: 130,
-                                height: 80,
-                                child:
-                                    posterImage != null
-                                        ? Hero(
-                                          tag: heroTag,
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                              Expanded(
+                                child: SizedBox(
+                                  width: 130,
+                                  height: 80,
+                                  child:
+                                      posterImage != null
+                                          ? Hero(
+                                            tag: heroTag,
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: Image(
+                                                image: posterImage,
+                                                fit: BoxFit.cover,
+                                                width: 130,
+                                                height: 80,
+                                              ),
                                             ),
-                                            child: Image(
-                                              image: posterImage,
-                                              fit: BoxFit.cover,
-                                              width: 130,
-                                              height: 80,
+                                          )
+                                          : Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Icon(
+                                              Icons.image_not_supported,
                                             ),
                                           ),
-                                        )
-                                        : Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.image_not_supported,
-                                          ),
-                                        ),
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -281,25 +280,23 @@ class _SearchScreenState extends State<SearchScreen> {
                                 ),
                               ),
                               Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        right: 8.0,
+                                flex: 1,
+                                child: Center(
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepOrange,
+                                        fontFamily: 'playpen',
                                       ),
-                                      child: Text(
-                                        'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.deepOrange,
-                                          fontFamily: 'playpen',
-                                        ),
-                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ],

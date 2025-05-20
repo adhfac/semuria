@@ -19,12 +19,36 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  final PageController _pageController = PageController(initialPage: 0);
 
   final List<Widget> _screens = [
     const HomeScreen(),
     const SearchScreen(),
     const ProfileScreen(),
   ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +70,7 @@ class _HomePageState extends State<HomePage> {
                 title: Text(
                   'Keluar Aplikasi?',
                   style: TextStyle(
-                    fontFamily: 'playpen', // Corrected font family name
+                    fontFamily: 'playpen',
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -55,7 +79,7 @@ class _HomePageState extends State<HomePage> {
                 content: Text(
                   'Kamu akan meninggalkan aplikasi ini, kamu serius? 😭🙏',
                   style: TextStyle(
-                    fontFamily: 'playpen', // Corrected font family name
+                    fontFamily: 'playpen',
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
@@ -71,16 +95,14 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       'Batal',
                       style: TextStyle(
-                        fontFamily: 'playpen', // Corrected font family name
+                        fontFamily: 'playpen',
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   ElevatedButton(
-                    onPressed:
-                        () =>
-                            SystemNavigator.pop(), // Use SystemNavigator.pop()
+                    onPressed: () => SystemNavigator.pop(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.secondary,
                       foregroundColor: theme.colorScheme.onSecondary,
@@ -96,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                     child: const Text(
                       'Keluar',
                       style: TextStyle(
-                        fontFamily: 'playpen', // Corrected font family name
+                        fontFamily: 'playpen',
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -110,39 +132,36 @@ class _HomePageState extends State<HomePage> {
         }
       },
       child: Scaffold(
-        body: _screens[_selectedIndex],
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: _screens,
+          physics: const ClampingScrollPhysics(),
+        ),
         bottomNavigationBar: Container(
-          // Wrap BottomNavigationBar with Container
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.only(
-              // Add rounded corners to the top
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+              topLeft: Radius.circular(70),
+              topRight: Radius.circular(70),
             ),
             boxShadow: [
-              // Add a shadow for better separation
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
                 spreadRadius: 5,
                 blurRadius: 10,
-                offset: const Offset(0, -3), // changes position of shadow
+                offset: const Offset(0, -3),
               ),
             ],
           ),
           child: ClipRRect(
-            // Clip the rounded corners
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+              topLeft: Radius.circular(70),
+              topRight: Radius.circular(70),
             ),
             child: BottomNavigationBar(
               backgroundColor: theme.colorScheme.secondary,
               currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
+              onTap: _onItemTapped,
               selectedItemColor: theme.colorScheme.onSecondary,
               unselectedItemColor: theme.colorScheme.onSecondary.withOpacity(
                 0.6,
@@ -167,9 +186,7 @@ class _HomePageState extends State<HomePage> {
                   label: 'Profile',
                 ),
               ],
-              type:
-                  BottomNavigationBarType
-                      .fixed, // Ensure labels are shown if needed
+              type: BottomNavigationBarType.fixed,
             ),
           ),
         ),
@@ -606,17 +623,20 @@ Widget _buildFeaturedCarousel(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        data['name'] ?? 'Produk',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontFamily: 'playpen',
+                                      Expanded(
+                                        child: Text(
+                                          data['name'] ?? 'Produk',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontFamily: 'playpen',
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
+                                      SizedBox(width: 24),
                                       Container(
                                         child: Row(
                                           children: [
@@ -756,149 +776,153 @@ Widget _buildProductListItem(BuildContext context, DocumentSnapshot product) {
         ),
       );
     },
-    child: Container(
-      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 0),
-      height: 120,
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.onPrimary, width: 1),
+    child: Expanded(
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        height: 120,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: theme.colorScheme.onPrimary, width: 1),
+          ),
         ),
-      ),
-      child: Expanded(
-        child: Row(
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 130,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black87.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
+        child: Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 130,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black87.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child:
-                        data['posterImageBase64'] != null
-                            ? Hero(
-                              tag: heroTag,
-                              child: Image.memory(
-                                base64Decode(data['posterImageBase64']),
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                            : Container(
-                              color: theme.colorScheme.primary,
-                              child: Icon(
-                                Icons.image_not_supported,
-                                color: theme.colorScheme.onPrimary,
-                              ),
-                            ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    data['name'] ?? 'Produk',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onPrimary,
-                      fontFamily: 'playpen',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child:
+                            data['posterImageBase64'] != null
+                                ? Hero(
+                                  tag: heroTag,
+                                  child: Image.memory(
+                                    base64Decode(data['posterImageBase64']),
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                                : Container(
+                                  color: theme.colorScheme.primary,
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
+                                ),
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        data['category'] == 'WINDOWS' ||
-                                data['category'] == 'LAPTOP/PC'
-                            ? Icons.computer
-                            : (data['category'] == 'PS4' ||
-                                data['category'] == 'PS5' ||
-                                data['category'] == 'PS3' ||
-                                data['category'] == 'PS2' ||
-                                data['category'] == 'PS1')
-                            ? Icons.videogame_asset
-                            : (data['category'] == 'MOBILE')
-                            ? Icons.smartphone
-                            : Icons.games,
-                        color: theme.colorScheme.onPrimary,
-                        size: 14,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        data['category'] ?? 'Lainnya',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        size: 14,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        data['fullName'] ?? 'Anonim',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onPrimary,
-                          fontFamily: 'playpen',
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            SizedBox(width: 16),
-            // Price
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Text(
-                      'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      data['name'] ?? 'Produk',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.deepOrange,
+                        color: theme.colorScheme.onPrimary,
                         fontFamily: 'playpen',
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          data['category'] == 'WINDOWS' ||
+                                  data['category'] == 'LAPTOP/PC'
+                              ? Icons.computer
+                              : (data['category'] == 'PS4' ||
+                                  data['category'] == 'PS5' ||
+                                  data['category'] == 'PS3' ||
+                                  data['category'] == 'PS2' ||
+                                  data['category'] == 'PS1')
+                              ? Icons.videogame_asset
+                              : (data['category'] == 'MOBILE')
+                              ? Icons.smartphone
+                              : Icons.games,
+                          color: theme.colorScheme.onPrimary,
+                          size: 14,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          data['category'] ?? 'Lainnya',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 14,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          data['fullName'] ?? 'Anonim',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onPrimary,
+                            fontFamily: 'playpen',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              SizedBox(width: 16),
+              // Price
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(
+                        'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepOrange,
+                          fontFamily: 'playpen',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     ),

@@ -576,9 +576,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                             Colors.green,
                                                       ),
                                                     );
-                                                    Navigator.of(
-                                                      context,
-                                                    ).pop(); // Tutup dialog setelah berhasil
+                                                    Navigator.of(context).pop();
                                                   })
                                                   .catchError((error) {
                                                     ScaffoldMessenger.of(

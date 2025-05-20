@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 class AddReviewScreen extends StatefulWidget {
   final String productId;
@@ -13,8 +15,11 @@ class AddReviewScreen extends StatefulWidget {
 class _AddReviewScreenState extends State<AddReviewScreen> {
   final TextEditingController _komentarController = TextEditingController();
   int _rating = 0; // mulai dari 0, harus pilih minimal 1
+  bool _isSubmitting = false;
 
-  final CollectionReference reviews = FirebaseFirestore.instance.collection('reviews');
+  final CollectionReference reviews = FirebaseFirestore.instance.collection(
+    'reviews',
+  );
 
   @override
   void dispose() {
@@ -36,20 +41,85 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
       return;
     }
 
-    try {
-      await reviews.add({
-        'userId': 'anonymous', // ganti sesuai user login nanti
-        'productId': widget.productId,
-        'rating': _rating,
-        'komentar': _komentarController.text.trim(),
-        'createdAt': FieldValue.serverTimestamp(),
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Ambil userId dari FirebaseAuth
+      final uid = user.uid;
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final username = userDoc.data()?['username'] ?? 'Anonim';
+
+      try {
+        await reviews.add({
+          'userId': uid,
+          'fullName': username,
+          'productId': widget.productId,
+          'rating': _rating,
+          'komentar': _komentarController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        HapticFeedback.mediumImpact();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Text('Review berhasil ditambahkan!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.all(12),
+          ),
+        );
+
+        await Future.delayed(const Duration(seconds: 1));
+        Navigator.pop(context);
+      } catch (e) {
+        print('Gagal menambahkan review: $e');
+        _showErrorSnackBar('Gagal menambahkan review. Mohon coba lagi.');
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
+      }
+    } else {
+      _showErrorSnackBar('Anda harus login untuk memberikan review.');
+      setState(() {
+        _isSubmitting = false;
       });
-      Navigator.pop(context, true);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menambahkan review: $e')),
-      );
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(12),
+      ),
+    );
   }
 
   Widget buildStar(int index) {
@@ -76,9 +146,14 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tambah Review'),
+        title: Text(
+          'Tambah Review',
+          style: TextStyle(fontFamily: 'playpen', color: theme.onPrimary),
+        ),
+        backgroundColor: theme.primary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -86,7 +161,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           children: [
             const Text(
               'Berikan rating bintang:',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 18, fontFamily: 'playpen'),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -98,14 +173,26 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
               maxLines: 4,
               decoration: const InputDecoration(
                 labelText: 'Tulis ulasan Anda',
-                border: OutlineInputBorder(),
-                
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _submitReview,
-              child: const Text('Kirim Review'),
+              child: Text(
+                'Kirim Review',
+                style: TextStyle(fontFamily: 'playpen', color: Colors.white),
+              ),
             ),
           ],
         ),
