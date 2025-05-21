@@ -481,40 +481,60 @@ class _DetailScreenState extends State<DetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Rp ${NumberFormat('#,###', 'id_ID').format(int.tryParse(_productData!['price']?.toString() ?? '0') ?? 0)}',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.secondary,
-                            fontFamily: 'playpen',
+                      // Baris harga & kategori
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Rp ${NumberFormat('#,###', 'id_ID').format(int.tryParse(_productData!['price']?.toString() ?? '0') ?? 0)}',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.secondary,
+                                fontFamily: 'playpen',
+                              ),
+                            ),
                           ),
-                        ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _productData!['category'] ?? 'Lainnya',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: colorScheme.onPrimary,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'playpen',
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          _productData!['category'] ?? 'Lainnya',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: colorScheme.onPrimary,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'playpen',
-                          ),
+
+                      const SizedBox(
+                        height: 6,
+                      ),
+                      Text(
+                        'Stok: ${_productData!['stock'] ?? 0}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.tertiary,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'playpen',
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 12),
                   Text(
                     _productData!['name'] ?? 'Produk Tanpa Nama',
@@ -543,12 +563,14 @@ class _DetailScreenState extends State<DetailScreen> {
                         const SizedBox(width: 4),
                         Text(
                           _averageRating.toStringAsFixed(1),
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 16,
+                            fontFamily: 'playpen',
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '($_reviewCount reviews)',
-                          style: const TextStyle(fontSize: 14),
+                          style: const TextStyle(fontSize: 14, fontFamily: 'playpen'),
                         ),
                       ],
                     ),

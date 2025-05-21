@@ -41,7 +41,7 @@ class _SearchScreenState extends State<SearchScreen> {
           style: TextStyle(
             fontFamily: 'playpen',
             fontWeight: FontWeight.bold,
-            color: Color(0xFFA80038),
+            color: Color(0xFFfd0054),
             shadows: <Shadow>[
               Shadow(
                 offset: Offset(0, 1.0),

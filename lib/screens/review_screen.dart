@@ -28,7 +28,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Ulasan Produk')),
+      appBar: AppBar(title: const Text('Ulasan Produk', style: TextStyle(fontFamily: 'playpen'),)),
       body: StreamBuilder<QuerySnapshot>(
         stream:
             reviewCollection
@@ -95,11 +95,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
                               )
                               : null,
                     ),
-                    title: Text(displayName),
-                    subtitle: Text(komentar),
+                    title: Text(
+                      displayName,
+                      style: TextStyle(fontFamily: 'playpen'),
+                    ),
+                    subtitle: Text(
+                      komentar,
+                      style: TextStyle(fontFamily: 'playpen'),
+                    ),
                     trailing: Text(
                       '⭐ $rating',
-                      style: const TextStyle(fontSize: 14, color: Colors.amber),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.amber,
+                        fontFamily: 'playpen',
+                      ),
                     ),
                     isThreeLine: true,
                   );
@@ -120,7 +130,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
           );
           if (result == true) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Review berhasil ditambahkan')),
+              const SnackBar(
+                content: Text(
+                  'Review berhasil ditambahkan',
+                  style: TextStyle(fontFamily: 'playpen'),
+                ),
+              ),
             );
           }
         },

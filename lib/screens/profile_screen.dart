@@ -9,6 +9,12 @@ import 'package:semuria/screens/setting_screen.dart';
 import 'package:semuria/screens/add_post_screen.dart';
 import 'package:semuria/services/user_service.dart';
 import 'package:semuria/screens/detail_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+// Color constants
+const Color primaryColor = Color(0xFFFBF9FA); // Putih
+const Color secondaryColor = Color(0xFFA80038); // Merah
+const Color accentColor = Color(0xFF2B2024); // Hitam
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -50,6 +56,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       return DateFormat('dd/MM/yyyy').format(dateTime);
     }
+  }
+
+  Future<void> openMap() async {
+    if (_userData == null) return;
+
+    final latitude = _userData!['latitude'];
+    final longitude = _userData!['longitude'];
+
+    if (latitude == null || longitude == null) {
+      _showSnackBar('Koordinat lokasi tidak tersedia', Colors.orange);
+      return;
+    }
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+    );
+    final success = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!mounted) return;
+    if (!success) {
+      _showSnackBar('Tidak dapat membuka Google Maps', Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              color == Colors.red ? Icons.error_outline : Icons.info_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'playpen',
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _showCategoryFilter() async {
@@ -153,6 +212,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               currentUsername: _userData!['username'],
               backdropP: _userData!['backdropP'],
               profileP: _userData!['profileP'],
+              latitude: _userData!['latitude'],
+              longitude: _userData!['longitude'],
             ),
       ),
     );
@@ -315,42 +376,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: colorScheme.tertiary,
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: colorScheme.secondary,
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: openMap,
+                borderRadius: BorderRadius.circular(20),
+                highlightColor: colorScheme.secondary,
+                splashColor: colorScheme.secondary,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: secondaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.location_on,
+                          size: 20,
+                          color: secondaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _formatAddress(_userData!['address'] ?? ''),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onBackground,
+                                fontFamily: 'playpen',
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatAddress(_userData!['address'] ?? ''),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [secondaryColor, secondaryColor.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: secondaryColor.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: _navigateToEditProfile,
+                  icon: const Icon(Icons.edit, size: 20),
+                  label: const Text(
+                    'Edit Profile',
                     style: TextStyle(
-                      fontSize: 16,
-                      color: colorScheme.tertiary.withOpacity(0.7),
                       fontFamily: 'playpen',
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _navigateToEditProfile,
-                icon: const Icon(Icons.edit),
-                label: const Text(
-                  'Edit Profile',
-                  style: TextStyle(fontFamily: 'playpen'),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.secondary,
-                  foregroundColor: colorScheme.onSecondary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: primaryColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  elevation: 3,
                 ),
               ),
             ],

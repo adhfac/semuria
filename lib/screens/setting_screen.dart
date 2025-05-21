@@ -28,7 +28,7 @@ class SettingScreen extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'playpen',
             fontWeight: FontWeight.bold,
-            color: Color(0xFFA80038),
+            color: Color(0xFFfd0054),
             shadows: <Shadow>[
               Shadow(
                 offset: Offset(0, 1.0),
@@ -90,7 +90,9 @@ class SettingScreen extends StatelessWidget {
               title: const Text(
                 'About Us',
                 style: TextStyle(
-                    fontFamily: 'playpen', fontWeight: FontWeight.bold),
+                  fontFamily: 'playpen',
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               onTap: () {
                 showAboutDialog(

@@ -23,6 +23,7 @@ class _AddPostScreenState extends State<AddPostScreen>
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _stockController = TextEditingController();
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -133,6 +134,12 @@ class _AddPostScreenState extends State<AddPostScreen>
       return;
     }
 
+    final stock = int.tryParse(_stockController.text.replaceAll('Rp. ', ''));
+    if (stock == null || stock <= 0) {
+      _showErrorSnackBar('Stok produk tidak valid');
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
@@ -161,6 +168,8 @@ class _AddPostScreenState extends State<AddPostScreen>
           'userId': uid,
           'category': categories[_selectedIndex],
           'fullName': username,
+          'stock': stock,
+          'isAvailable': stock > 0
         });
 
         // Success haptic feedback
@@ -172,7 +181,7 @@ class _AddPostScreenState extends State<AddPostScreen>
               children: [
                 const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 12),
-                const Text('Produk berhasil ditambahkan!'),
+                const Text('Produk berhasil ditambahkan!', style: TextStyle(fontFamily: 'playpen'),),
               ],
             ),
             backgroundColor: Colors.green,
@@ -400,6 +409,14 @@ class _AddPostScreenState extends State<AddPostScreen>
           required: true,
         ),
         const SizedBox(height: 16),
+        _buildFormField(
+          label: "Jumlah Stock",
+          hint: "0",
+          controller: _stockController,
+          keyboardType: TextInputType.number,
+          icon: Icons.addchart_outlined,
+          required: true,
+        ),
       ],
     );
   }

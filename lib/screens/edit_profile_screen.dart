@@ -5,18 +5,24 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:semuria/services/user_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String? currentUsername;
   final String? backdropP;
   final String? profileP;
+  final double? latitude;
+  final double? longitude;
 
   const EditProfileScreen({
     super.key,
     required this.currentUsername,
     required this.backdropP,
     required this.profileP,
+    required this.latitude,
+    required this.longitude,
   });
 
   @override
@@ -36,6 +42,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   String? _newBackdropBase64;
   File? _profileImage;
 
+  // Location variables
+  double? _latitude;
+  double? _longitude;
+  String? _address;
+  bool _isLoadingLocation = false;
+  bool _locationError = false;
+
   // Animation controller
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -47,6 +60,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _usernameController = TextEditingController(text: widget.currentUsername);
     _newProfileBase64 = widget.profileP;
     _newBackdropBase64 = widget.backdropP;
+
+    // Initialize location from widget
+    _latitude = widget.latitude;
+    _longitude = widget.longitude;
 
     // Initialize animations
     _animationController = AnimationController(
@@ -66,6 +83,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
 
     _animationController.forward();
+
+    // Load current address if coordinates are available
+    if (_latitude != null && _longitude != null) {
+      _loadAddressFromCoordinates();
+    }
   }
 
   @override
@@ -73,6 +95,48 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _animationController.dispose();
     _usernameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAddressFromCoordinates() async {
+    if (_latitude == null || _longitude == null) return;
+
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        _latitude!,
+        _longitude!,
+      );
+
+      if (placemarks.isNotEmpty && mounted) {
+        final p = placemarks.first;
+        String addressText = '';
+
+        List<String> addressParts = [];
+        if (p.street != null && p.street!.isNotEmpty)
+          addressParts.add(p.street!);
+        if (p.subLocality != null && p.subLocality!.isNotEmpty)
+          addressParts.add(p.subLocality!);
+        if (p.locality != null && p.locality!.isNotEmpty)
+          addressParts.add(p.locality!);
+        if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty)
+          addressParts.add(p.administrativeArea!);
+        if (p.country != null && p.country!.isNotEmpty)
+          addressParts.add(p.country!);
+
+        addressText = addressParts.join(', ');
+        if (addressText.isEmpty) addressText = 'Alamat tidak diketahui';
+
+        setState(() {
+          _address = addressText;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load address: $e');
+      if (mounted) {
+        setState(() {
+          _address = 'Gagal memuat alamat';
+        });
+      }
+    }
   }
 
   void _showImageSourceModal({required bool isProfileImage}) {
@@ -193,6 +257,237 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     }
   }
 
+  Future<void> _getUserLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+      _locationError = false;
+    });
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showErrorSnackbar(
+          'Layanan lokasi tidak aktif. Silakan aktifkan di pengaturan.',
+        );
+        setState(() {
+          _isLoadingLocation = false;
+          _locationError = true;
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.deniedForever ||
+            permission == LocationPermission.denied) {
+          _showErrorSnackbar(
+            'Izin lokasi ditolak. Silakan berikan izin di pengaturan aplikasi.',
+          );
+          setState(() {
+            _isLoadingLocation = false;
+            _locationError = true;
+          });
+          return;
+        }
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      ).timeout(const Duration(seconds: 15));
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      String addressText = "Lokasi tidak diketahui";
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        List<String> addressParts = [];
+        if (p.street != null && p.street!.isNotEmpty)
+          addressParts.add(p.street!);
+        if (p.subLocality != null && p.subLocality!.isNotEmpty)
+          addressParts.add(p.subLocality!);
+        if (p.locality != null && p.locality!.isNotEmpty)
+          addressParts.add(p.locality!);
+        if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty)
+          addressParts.add(p.administrativeArea!);
+        if (p.country != null && p.country!.isNotEmpty)
+          addressParts.add(p.country!);
+
+        if (addressParts.isNotEmpty) {
+          addressText = addressParts.join(', ');
+        }
+      }
+
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _address = addressText;
+        _isLoadingLocation = false;
+        _locationError = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Lokasi berhasil diperbarui!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Failed to retrieve location: $e');
+      _showErrorSnackbar('Gagal mendapatkan lokasi: ${e.toString()}');
+      setState(() {
+        _isLoadingLocation = false;
+        _locationError = true;
+      });
+    }
+  }
+
+  Widget _buildLocationInfo() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color:
+                _locationError
+                    ? Colors.red.withOpacity(0.1)
+                    : Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color:
+                  _locationError
+                      ? Colors.red.withOpacity(0.3)
+                      : Theme.of(
+                        context,
+                      ).colorScheme.secondary.withOpacity(0.3),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    _locationError ? Icons.location_off : Icons.location_on,
+                    color:
+                        _locationError
+                            ? Colors.red
+                            : Theme.of(context).colorScheme.secondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Lokasi",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'playpen',
+                      color:
+                          _locationError
+                              ? Colors.red
+                              : Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (_locationError ||
+                      (_latitude == null && _longitude == null))
+                    TextButton.icon(
+                      onPressed: _isLoadingLocation ? null : _getUserLocation,
+                      icon: Icon(
+                        _locationError ? Icons.refresh : Icons.my_location,
+                        size: 16,
+                      ),
+                      label: Text(_locationError ? "Coba lagi" : "Dapatkan"),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        foregroundColor:
+                            _locationError
+                                ? Colors.red
+                                : Theme.of(context).colorScheme.secondary,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    )
+                  else
+                    TextButton.icon(
+                      onPressed: _isLoadingLocation ? null : _getUserLocation,
+                      icon: const Icon(Icons.edit_location, size: 16),
+                      label:  Text("Perbarui", style: TextStyle(fontFamily: 'playpen'),),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        foregroundColor:
+                            Theme.of(context).colorScheme.secondary,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _isLoadingLocation
+                  ? Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Mendapatkan lokasi...",
+                        style: TextStyle(fontFamily: 'playpen'),
+                      ),
+                    ],
+                  )
+                  : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_latitude != null && _longitude != null) ...[
+                        Text(
+                          _address ?? "Memuat alamat...",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'playpen',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Koordinat: ${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'playpen',
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          "Lokasi belum diatur",
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            fontFamily: 'playpen',
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showErrorSnackbar(String message) {
     if (!mounted) return;
 
@@ -218,6 +513,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         username: _usernameController.text.trim(),
         profileP: _newProfileBase64,
         backdropP: _newBackdropBase64,
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       if (!mounted) return;
@@ -450,7 +747,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ),
         ),
       ),
-
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(24),
@@ -508,7 +804,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
+              _buildLocationInfo(),
+              const SizedBox(height: 24),
               _buildBackdropImagePicker(),
               const SizedBox(height: 32),
               FadeTransition(
