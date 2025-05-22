@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 
-// Color constants
-const Color primaryColor = Color(0xFFFBF9FA); // Putih
-const Color secondaryColor = Color(0xFFA80038); // Merah
-const Color accentColor = Color(0xFF2B2024); // Hitam
+Color secondaryColor = Color(0xFFA80038); // Merah
+Color accentColor = Color(0xFF2B2024); // Hitam
 
 class AddReviewScreen extends StatefulWidget {
   final String productId;
@@ -133,6 +131,7 @@ class _AddReviewScreenState extends State<AddReviewScreen>
   }
 
   void _showCustomSnackBar(String message, IconData icon, Color color) {
+    final theme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -142,10 +141,10 @@ class _AddReviewScreenState extends State<AddReviewScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: theme.primary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(icon, color: Colors.white, size: 20),
+                child: Icon(icon, color: theme.onPrimary, size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -216,18 +215,20 @@ class _AddReviewScreenState extends State<AddReviewScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: primaryColor,
+      backgroundColor: theme.primary,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: primaryColor,
+        backgroundColor: theme.primary,
         foregroundColor: accentColor,
-        title: const Text(
+        title: Text(
           'Tambah Review',
           style: TextStyle(
             fontFamily: 'playpen',
             fontWeight: FontWeight.w600,
             fontSize: 20,
+            color: theme.onPrimary,
           ),
         ),
         centerTitle: true,
@@ -256,11 +257,11 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.primary,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: accentColor.withOpacity(0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -281,13 +282,13 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Bagaimana pengalaman Anda?',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'playpen',
-                          color: accentColor,
+                          color: theme.onPrimary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -296,7 +297,7 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                         'Berikan rating dan ulasan untuk membantu pengguna lain',
                         style: TextStyle(
                           fontSize: 14,
-                          color: accentColor.withOpacity(0.7),
+                          color: theme.onPrimary.withOpacity(0.7),
                           fontFamily: 'playpen',
                         ),
                         textAlign: TextAlign.center,
@@ -311,11 +312,11 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.primary,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: accentColor.withOpacity(0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -323,13 +324,13 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                   ),
                   child: Column(
                     children: [
-                      const Text(
+                      Text(
                         'Rating Bintang',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'playpen',
-                          color: accentColor,
+                          color: theme.onPrimary,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -339,7 +340,7 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryColor,
+                          color: theme.primary,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color:
@@ -383,11 +384,11 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.primary,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: accentColor.withOpacity(0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -396,13 +397,13 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Tulis Ulasan',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'playpen',
-                          color: accentColor,
+                          color: theme.onPrimary,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -417,16 +418,16 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                         child: TextField(
                           controller: _komentarController,
                           maxLines: 5,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontFamily: 'playpen',
-                            color: accentColor,
+                            color: theme.onPrimary,
                           ),
                           decoration: InputDecoration(
                             hintText:
                                 'Ceritakan pengalaman Anda dengan produk ini...',
                             hintStyle: TextStyle(
-                              color: accentColor.withOpacity(0.5),
+                              color: theme.onPrimary.withOpacity(0.5),
                               fontFamily: 'playpen',
                             ),
                             border: InputBorder.none,
@@ -478,27 +479,27 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      primaryColor,
+                                      theme.primary,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
+                                Text(
                                   'Mengirim...',
                                   style: TextStyle(
                                     fontFamily: 'playpen',
-                                    color: primaryColor,
+                                    color: theme.onPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             )
-                            : const Text(
+                            : Text(
                               'Kirim Review',
                               style: TextStyle(
                                 fontFamily: 'playpen',
-                                color: primaryColor,
+                                color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),

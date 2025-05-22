@@ -249,53 +249,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ? const Center(child: Text('No user data found'))
                     : _buildProfileWithPosts(),
           ),
+
+          // Tombol History
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 8, // dipindahkan ke kiri agar tidak menumpuk
+            child: _buildCircleButton(
+              icon: Icons.history_rounded,
+              onPressed: () {
+                // Navigator.push(
+                //   context,
+                //   PageRouteBuilder(
+                //     pageBuilder:
+                //         (context, animation, secondaryAnimation) =>
+                //             const HistoryScreen(), // Ganti sesuai kebutuhan
+                //     transitionsBuilder: (context, animation, _, child) {
+                //       return SlideTransition(
+                //         position: animation.drive(
+                //           Tween(
+                //             begin: const Offset(1.0, 0.0),
+                //             end: Offset.zero,
+                //           ).chain(CurveTween(curve: Curves.easeInOut)),
+                //         ),
+                //         child: child,
+                //       );
+                //     },
+                //   ),
+                // );
+              },
+            ),
+          ),
+
+          // Tombol Setting
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             right: 8,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.7),
-                    Colors.black.withOpacity(0.3),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                    spreadRadius: 1,
+            child: _buildCircleButton(
+              icon: Icons.settings_outlined,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder:
+                        (context, animation, secondaryAnimation) =>
+                            const SettingScreen(),
+                    transitionsBuilder: (context, animation, _, child) {
+                      return SlideTransition(
+                        position: animation.drive(
+                          Tween(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).chain(CurveTween(curve: Curves.easeInOut)),
+                        ),
+                        child: child,
+                      );
+                    },
                   ),
-                ],
-              ),
-              child: IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder:
-                          (context, animation, secondaryAnimation) =>
-                              const SettingScreen(),
-                      transitionsBuilder: (context, animation, _, child) {
-                        return SlideTransition(
-                          position: animation.drive(
-                            Tween(
-                              begin: const Offset(1.0, 0.0),
-                              end: Offset.zero,
-                            ).chain(CurveTween(curve: Curves.easeInOut)),
-                          ),
-                          child: child,
-                        );
-                      },
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.settings_outlined, color: Colors.white),
-              ),
+                );
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCircleButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.7),
+            Colors.black.withOpacity(0.3),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        onPressed: onPressed,
       ),
     );
   }
@@ -362,21 +404,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 70),
+        const SizedBox(height: 55),
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(10.0),
           child: Column(
             children: [
-              Text(
-                _userData!['username'] ?? 'No Username',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'playpen',
-                  color: colorScheme.tertiary,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '@${_userData!['username'] ?? 'No Username'}',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'playpen',
+                      color: colorScheme.tertiary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.mail),
+                    color: colorScheme.onBackground,
+                    tooltip: 'Kirim Pesan',
+                    onPressed: () {
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const InboxScreen(),
+                      //   ),
+                      // );
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               InkWell(
                 onTap: openMap,
                 borderRadius: BorderRadius.circular(20),
@@ -423,7 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
@@ -455,8 +516,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shadowColor: Colors.transparent,
                     foregroundColor: primaryColor,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
+                      horizontal: 20,
+                      vertical: 8,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

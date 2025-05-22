@@ -129,13 +129,13 @@ class _AddPostScreenState extends State<AddPostScreen>
     }
 
     final price = int.tryParse(_priceController.text.replaceAll('Rp. ', ''));
-    if (price == null || price <= 0) {
+    if (price == null || price <= 0 || price > 999999999) {
       _showErrorSnackBar('Harga produk tidak valid');
       return;
     }
 
     final stock = int.tryParse(_stockController.text.replaceAll('Rp. ', ''));
-    if (stock == null || stock <= 0) {
+    if (stock == null || stock <= 0 || stock > 999) {
       _showErrorSnackBar('Stok produk tidak valid');
       return;
     }
@@ -169,7 +169,7 @@ class _AddPostScreenState extends State<AddPostScreen>
           'category': categories[_selectedIndex],
           'fullName': username,
           'stock': stock,
-          'isAvailable': stock > 0
+          'isAvailable': stock > 0,
         });
 
         // Success haptic feedback
@@ -181,7 +181,10 @@ class _AddPostScreenState extends State<AddPostScreen>
               children: [
                 const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 12),
-                const Text('Produk berhasil ditambahkan!', style: TextStyle(fontFamily: 'playpen'),),
+                const Text(
+                  'Produk berhasil ditambahkan!',
+                  style: TextStyle(fontFamily: 'playpen'),
+                ),
               ],
             ),
             backgroundColor: Colors.green,
@@ -408,6 +411,31 @@ class _AddPostScreenState extends State<AddPostScreen>
           icon: Icons.monetization_on_outlined,
           required: true,
         ),
+        Builder(
+          builder: (context) {
+            final price =
+                int.tryParse(
+                  _priceController.text
+                      .replaceAll('Rp. ', '')
+                      .replaceAll('.', ''),
+                ) ??
+                0;
+            if (price > 999999999) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                child: Text(
+                  "Harga maksimal Rp. 999.999.999",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 12,
+                    fontFamily: 'playpen',
+                  ),
+                ),
+              );
+            }
+            return SizedBox.shrink();
+          },
+        ),
         const SizedBox(height: 16),
         _buildFormField(
           label: "Jumlah Stock",
@@ -416,6 +444,26 @@ class _AddPostScreenState extends State<AddPostScreen>
           keyboardType: TextInputType.number,
           icon: Icons.addchart_outlined,
           required: true,
+        ),
+        Builder(
+          builder: (context) {
+            final stock =
+                int.tryParse(_stockController.text.replaceAll('.', '')) ?? 0;
+            if (stock > 999) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                child: Text(
+                  "Stock maksimal 999",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 12,
+                    fontFamily: 'playpen',
+                  ),
+                ),
+              );
+            }
+            return SizedBox.shrink();
+          },
         ),
       ],
     );
