@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:semuria/screens/checkout_screen.dart';
-import 'package:semuria/screens/full_image_screen.dart';
-import 'package:semuria/screens/review_screen.dart';
+import 'package:semuria1/screens/checkout_screen.dart';
+import 'package:semuria1/screens/full_image_screen.dart';
+import 'package:semuria1/screens/review_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -305,7 +305,9 @@ class _DetailScreenState extends State<DetailScreen> {
                                     imageBase64:
                                         _productData!['posterImageBase64'] ??
                                         '',
-                                    imageUrl: null,
+                                     userId: _productData!['userId'] ??
+                                        'Platform tidak diketahui', 
+                                    
                                   ),
                             ),
                           );
