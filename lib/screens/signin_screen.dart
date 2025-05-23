@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:semuria/screens/home_screen.dart';
 import 'package:semuria/screens/sign_up_screen.dart';
+import 'package:semuria/screens/forgot_password_screen.dart';
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -31,8 +32,10 @@ class _SigninScreenState extends State<SigninScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
   }
@@ -82,9 +85,10 @@ class _SigninScreenState extends State<SigninScreen>
         );
       } catch (e) {
         setState(() {
-          _errorMessage = e.toString().contains('firebase_auth')
-              ? 'Invalid email or password. Please try again.'
-              : e.toString();
+          _errorMessage =
+              e.toString().contains('firebase_auth')
+                  ? 'Invalid email or password. Please try again.'
+                  : e.toString();
           _isLoading = false;
         });
 
@@ -103,6 +107,29 @@ class _SigninScreenState extends State<SigninScreen>
         );
       }
     }
+  }
+
+  void _navigateToForgotPassword() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) =>
+                const ForgotPasswordScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          var begin = const Offset(0.0, 1.0);
+          var end = Offset.zero;
+          var curve = Curves.easeInOut;
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -127,9 +154,10 @@ class _SigninScreenState extends State<SigninScreen>
         title: Text(
           'Sign In',
           style: TextStyle(
-              fontFamily: 'playpen',
-              color: theme.colorScheme.onBackground,
-              fontWeight: FontWeight.bold),
+            fontFamily: 'playpen',
+            color: theme.colorScheme.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
@@ -165,6 +193,7 @@ class _SigninScreenState extends State<SigninScreen>
                     const SizedBox(height: 24),
                     _buildPasswordField(theme),
                     const SizedBox(height: 8),
+                    _buildForgotPasswordLink(theme),
                     const SizedBox(height: 32),
                     _buildSignInButton(theme),
                     const SizedBox(height: 24),
@@ -214,8 +243,10 @@ class _SigninScreenState extends State<SigninScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: theme.colorScheme.secondary, width: 1.5),
+          borderSide: BorderSide(
+            color: theme.colorScheme.secondary,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -267,8 +298,10 @@ class _SigninScreenState extends State<SigninScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: theme.colorScheme.secondary, width: 1.5),
+          borderSide: BorderSide(
+            color: theme.colorScheme.secondary,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -277,6 +310,26 @@ class _SigninScreenState extends State<SigninScreen>
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForgotPasswordLink(ThemeData theme) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: GestureDetector(
+        onTap: _navigateToForgotPassword,
+        child: Text(
+          'Forgot Password?',
+          style: TextStyle(
+            color: theme.colorScheme.secondary,
+            fontFamily: 'playpen',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            decoration: TextDecoration.underline,
+            decorationThickness: 1.2,
+          ),
         ),
       ),
     );
@@ -297,23 +350,24 @@ class _SigninScreenState extends State<SigninScreen>
           ),
           shadowColor: theme.colorScheme.secondary.withOpacity(0.5),
         ),
-        child: _isLoading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: theme.colorScheme.onSecondary,
-                  strokeWidth: 2,
+        child:
+            _isLoading
+                ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: theme.colorScheme.onSecondary,
+                    strokeWidth: 2,
+                  ),
+                )
+                : const Text(
+                  "Sign In",
+                  style: TextStyle(
+                    fontFamily: 'playpen',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              )
-            : const Text(
-                "Sign In",
-                style: TextStyle(
-                  fontFamily: 'playpen',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
       ),
     );
   }
@@ -333,17 +387,26 @@ class _SigninScreenState extends State<SigninScreen>
           onTap: () {
             Navigator.of(context).pushReplacement(
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const SignUpScreen(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
+                pageBuilder:
+                    (context, animation, secondaryAnimation) =>
+                        const SignUpScreen(),
+                transitionsBuilder: (
+                  context,
+                  animation,
+                  secondaryAnimation,
+                  child,
+                ) {
                   var begin = const Offset(1.0, 0.0);
                   var end = Offset.zero;
                   var curve = Curves.easeInOut;
-                  var tween = Tween(begin: begin, end: end)
-                      .chain(CurveTween(curve: curve));
+                  var tween = Tween(
+                    begin: begin,
+                    end: end,
+                  ).chain(CurveTween(curve: curve));
                   return SlideTransition(
-                      position: animation.drive(tween), child: child);
+                    position: animation.drive(tween),
+                    child: child,
+                  );
                 },
               ),
             );
