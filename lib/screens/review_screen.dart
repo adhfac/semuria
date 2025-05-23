@@ -28,7 +28,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Ulasan Produk', style: TextStyle(fontFamily: 'playpen'),)),
+      appBar: AppBar(
+        title: const Text(
+          'Ulasan Produk',
+          style: TextStyle(fontFamily: 'playpen'),
+        ),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: theme.onBackground,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream:
             reviewCollection

@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:semuria/screens/edit_profile_screen.dart';
+import 'package:semuria/screens/history_screen.dart';
+import 'package:semuria/screens/inbox_screen.dart';
 import 'package:semuria/screens/setting_screen.dart';
 import 'package:semuria/screens/add_post_screen.dart';
 import 'package:semuria/services/user_service.dart';
@@ -257,25 +259,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: _buildCircleButton(
               icon: Icons.history_rounded,
               onPressed: () {
-                // Navigator.push(
-                //   context,
-                //   PageRouteBuilder(
-                //     pageBuilder:
-                //         (context, animation, secondaryAnimation) =>
-                //             const HistoryScreen(), // Ganti sesuai kebutuhan
-                //     transitionsBuilder: (context, animation, _, child) {
-                //       return SlideTransition(
-                //         position: animation.drive(
-                //           Tween(
-                //             begin: const Offset(1.0, 0.0),
-                //             end: Offset.zero,
-                //           ).chain(CurveTween(curve: Curves.easeInOut)),
-                //         ),
-                //         child: child,
-                //       );
-                //     },
-                //   ),
-                // );
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder:
+                        (context, animation, secondaryAnimation) =>
+                            HistoryScreen(currentUserId: FirebaseAuth.instance.currentUser?.uid),
+                    transitionsBuilder: (context, animation, _, child) {
+                      return SlideTransition(
+                        position: animation.drive(
+                          Tween(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).chain(CurveTween(curve: Curves.easeInOut)),
+                        ),
+                        child: child,
+                      );
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -427,12 +429,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: colorScheme.onBackground,
                     tooltip: 'Kirim Pesan',
                     onPressed: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => const InboxScreen(),
-                      //   ),
-                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => InboxScreen(
+                                userIdPenjual:
+                                    FirebaseAuth.instance.currentUser!.uid,
+                              ),
+                        ),
+                      );
                     },
                   ),
                 ],

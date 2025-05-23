@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:semuria1/screens/checkout_screen.dart';
-import 'package:semuria1/screens/full_image_screen.dart';
-import 'package:semuria1/screens/review_screen.dart';
+import 'package:semuria/screens/checkout_screen.dart';
+import 'package:semuria/screens/full_image_screen.dart';
+import 'package:semuria/screens/review_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -305,9 +305,10 @@ class _DetailScreenState extends State<DetailScreen> {
                                     imageBase64:
                                         _productData!['posterImageBase64'] ??
                                         '',
-                                     userId: _productData!['userId'] ??
-                                        'Platform tidak diketahui', 
-                                    
+                                    userId:
+                                        _productData!['userId'] ??
+                                        'Platform tidak diketahui',
+                                    idProduk: widget.productId,
                                   ),
                             ),
                           );
@@ -522,9 +523,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         ],
                       ),
 
-                      const SizedBox(
-                        height: 6,
-                      ),
+                      const SizedBox(height: 6),
                       Text(
                         'Stok: ${_productData!['stock'] ?? 0}',
                         style: TextStyle(
@@ -565,14 +564,18 @@ class _DetailScreenState extends State<DetailScreen> {
                         const SizedBox(width: 4),
                         Text(
                           _averageRating.toStringAsFixed(1),
-                          style: const TextStyle(fontSize: 16,
+                          style: const TextStyle(
+                            fontSize: 16,
                             fontFamily: 'playpen',
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '($_reviewCount reviews)',
-                          style: const TextStyle(fontSize: 14, fontFamily: 'playpen'),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'playpen',
+                          ),
                         ),
                       ],
                     ),

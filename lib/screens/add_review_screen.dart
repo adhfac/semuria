@@ -233,15 +233,13 @@ class _AddReviewScreenState extends State<AddReviewScreen>
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.arrow_back_ios, size: 18),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: theme.onBackground,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: FadeTransition(

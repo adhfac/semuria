@@ -537,6 +537,7 @@ Widget _buildFeaturedCarousel(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onPrimary,
+            fontFamily: 'playpen'
           ),
         ),
       ),
