@@ -364,8 +364,6 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget _buildProductDetail(ColorScheme colorScheme) {
     final Timestamp timestamp = _productData!['createdAt'] ?? Timestamp.now();
     final DateTime createdAt = timestamp.toDate();
-    final int reviewCount = _productData!['reviewCount'] ?? 0;
-    double rating = 0.0;
 
     return CustomScrollView(
       slivers: [

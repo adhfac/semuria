@@ -285,7 +285,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   child: Container(
                                     alignment: Alignment.center,
                                     child: Text(
-                                      'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(data['price']?.toString() ?? '0') ?? 0)}',
+                                      'Rp${NumberFormat('#,###', 'id_ID').format(int.tryParse(price?.toString() ?? '0') ?? 0)}',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
