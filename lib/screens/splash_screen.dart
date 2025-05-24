@@ -21,8 +21,6 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _logoRotationAnimation;
   late Animation<double> _backgroundAnimation;
-  late Animation<double> _textFadeAnimation;
-  late Animation<Offset> _textSlideAnimation;
 
   @override
   void initState() {
@@ -71,19 +69,6 @@ class _SplashScreenState extends State<SplashScreen>
     // Background gradient animation
     _backgroundAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _backgroundController, curve: Curves.easeInOut),
-    );
-
-    // Text animations
-    _textFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _textController, curve: Curves.easeIn));
-
-    _textSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
     );
 
     // Start animations with delays
@@ -151,13 +136,13 @@ class _SplashScreenState extends State<SplashScreen>
               gradient: LinearGradient(
                 colors: [
                   Color.lerp(
-                    const Color(0xFFF8E6E0), // Soft peach
-                    const Color(0xFFE8D5CF), // Warm beige
+                    const Color(0xFF2b2024), // Soft peach
+                    const Color(0xFF2b2024), // Warm beige
                     _backgroundAnimation.value,
                   )!,
                   Color.lerp(
-                    const Color(0xFFFFFBF8), // Cream white
-                    const Color(0xFFF5F2F0), // Soft off-white
+                    const Color(0xFF2b2024), // Cream white
+                    const Color(0xFF2b2024), // Soft off-white
                     _backgroundAnimation.value,
                   )!,
                 ],
@@ -186,97 +171,15 @@ class _SplashScreenState extends State<SplashScreen>
                               scale: _logoScaleAnimation.value,
                               child: FadeTransition(
                                 opacity: _logoFadeAnimation,
-                                child: Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.6),
-                                    borderRadius: BorderRadius.circular(30),
-                                    border: Border.all(
-                                      color: const Color(
-                                        0xFFD4B5A0,
-                                      ).withOpacity(0.4),
-                                      width: 2,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFFD4B5A0,
-                                        ).withOpacity(0.15),
-                                        blurRadius: 20,
-                                        spreadRadius: 3,
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.white.withOpacity(0.8),
-                                        blurRadius: 8,
-                                        spreadRadius: 1,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Image.asset(
-                                    'images/hitam.png',
-                                    width: 120,
-                                    height: 120,
-                                  ),
+                                child: Image.asset(
+                                  'images/merah.png',
+                                  width: 200,
+                                  height: 200,
                                 ),
                               ),
                             ),
                           );
                         },
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // App name with slide animation
-                      SlideTransition(
-                        position: _textSlideAnimation,
-                        child: FadeTransition(
-                          opacity: _textFadeAnimation,
-                          child: Column(
-                            children: [
-                              Text(
-                                'SEMURIA',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF6B4E3D),
-                                  letterSpacing: 3,
-                                  fontFamily: 'playpen',
-                                  shadows: [
-                                    Shadow(
-                                      color: const Color(
-                                        0xFFD4B5A0,
-                                      ).withOpacity(0.4),
-                                      offset: const Offset(2, 2),
-                                      blurRadius: 6,
-                                    ),
-                                    Shadow(
-                                      color: Colors.white.withOpacity(0.8),
-                                      offset: const Offset(-1, -1),
-                                      blurRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 60),
-
-                      // Loading indicator
-                      FadeTransition(
-                        opacity: _textFadeAnimation,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              const Color(0xFF9C7B6B).withOpacity(0.7),
-                            ),
-                            strokeWidth: 3,
-                          ),
-                        ),
                       ),
                     ],
                   ),

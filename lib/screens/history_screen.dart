@@ -276,7 +276,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         backgroundColor: theme.primary,
         appBar: AppBar(
           title: Text(
-            'History Pesanan',
+            'History',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -295,6 +295,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Navigator.of(context).pop();
             },
           ),
+          centerTitle: true,
           bottom: TabBar(
             indicatorColor: Colors.white,
             indicatorWeight: 3,

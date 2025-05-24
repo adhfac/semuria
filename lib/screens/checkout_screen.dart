@@ -666,7 +666,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                         ),
                       )
                       : Text(
-                        'Beli Sekarang',
+                        'Bayar Sekarang',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

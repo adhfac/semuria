@@ -233,10 +233,7 @@ class _AddReviewScreenState extends State<AddReviewScreen>
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: theme.onBackground,
-          ),
+          icon: Icon(Icons.arrow_back_ios, color: theme.onBackground),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -251,61 +248,6 @@ class _AddReviewScreenState extends State<AddReviewScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header Card
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: theme.primary,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: secondaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Icon(
-                          Icons.rate_review,
-                          size: 32,
-                          color: secondaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Bagaimana pengalaman Anda?',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'playpen',
-                          color: theme.onPrimary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Berikan rating dan ulasan untuk membantu pengguna lain',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: theme.onPrimary.withOpacity(0.7),
-                          fontFamily: 'playpen',
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
                 // Rating Section
                 Container(
                   padding: const EdgeInsets.all(24),
@@ -322,16 +264,6 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        'Rating Bintang',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'playpen',
-                          color: theme.onPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -437,7 +369,7 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Submit Button
                 Container(

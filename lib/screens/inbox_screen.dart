@@ -26,7 +26,7 @@ class InboxScreen extends StatelessWidget {
       backgroundColor: colorScheme.primary,
       appBar: AppBar(
         title: Text(
-          'Inbox Pesanan Masuk',
+          'Inbox',
           style: TextStyle(
             fontFamily: 'playpen',
             fontSize: 20,
@@ -141,21 +141,8 @@ class InboxScreen extends StatelessWidget {
                   ),
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
-                    leading: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.shopping_cart_outlined,
-                        color: colorScheme.secondary,
-                        size: 24,
-                      ),
-                    ),
                     title: Text(
-                      data['nama_produk'] ?? 'Produk',
+                      'Konfirmasi Pesanan',
                       style: TextStyle(
                         fontFamily: 'playpen',
                         fontSize: 16,
@@ -166,7 +153,7 @@ class InboxScreen extends StatelessWidget {
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Dari: ${data['nama_pembeli'] ?? 'Pembeli'}',
+                        'Produk: ${data['nama_produk'] ?? 'Pembeli'}',
                         style: TextStyle(
                           fontFamily: 'playpen',
                           fontSize: 14,

@@ -151,7 +151,7 @@ class _DetailTransactionScreenState extends State<DetailTransactionScreen> {
       backgroundColor: theme.primary,
       appBar: AppBar(
         title: Text(
-          'Detail Transaksi',
+          'Konfirmasi Pesanan',
           style: TextStyle(
             fontFamily: 'playpen',
             fontSize: 20,
@@ -264,16 +264,6 @@ class _DetailTransactionScreenState extends State<DetailTransactionScreen> {
                   'Total',
                   'Rp ${_formatCurrency((data['harga'] ?? 0) * (data['jumlah'] ?? 1))}',
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Buyer Information Card
-            _buildInfoCard(
-              title: 'Informasi Pembeli',
-              icon: Icons.person_outline,
-              children: [
                 _buildInfoRow('Nama', data['nama_pembeli'] ?? 'Tidak tersedia'),
               ],
             ),
