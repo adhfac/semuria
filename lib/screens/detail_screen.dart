@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:semuria/screens/checkout_screen.dart';
 import 'package:semuria/screens/full_image_screen.dart';
 import 'package:semuria/screens/review_screen.dart';
+import 'package:semuria/screens/seller_profile_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -26,6 +27,7 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _isOwner = false;
   double _averageRating = 0.0;
   int _reviewCount = 0;
+  int _productStock = 0;
 
   @override
   void initState() {
@@ -50,6 +52,7 @@ class _DetailScreenState extends State<DetailScreen> {
           setState(() {
             _productData = data;
             _isOwner = currentUser != null && currentUser.uid == data['userId'];
+            _productStock = data['stock'] ?? 0;
           });
 
           // Load seller data
@@ -270,7 +273,10 @@ class _DetailScreenState extends State<DetailScreen> {
                   ),
                 )
                 : _buildProductDetail(colorScheme),
-            if (!_isLoading && _productData != null && !_isOwner)
+            if (!_isLoading &&
+                _productData != null &&
+                !_isOwner &&
+                _productStock > 0)
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -338,27 +344,6 @@ class _DetailScreenState extends State<DetailScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildRatingStars(double rating) {
-    // Maksimal 5 bintang
-    int fullStars = rating.floor();
-    bool hasHalfStar = (rating - fullStars) >= 0.5;
-    int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
-    List<Widget> stars = [];
-
-    for (int i = 0; i < fullStars; i++) {
-      stars.add(const Icon(Icons.star, color: Colors.amber, size: 20));
-    }
-    if (hasHalfStar) {
-      stars.add(const Icon(Icons.star_half, color: Colors.amber, size: 20));
-    }
-    for (int i = 0; i < emptyStars; i++) {
-      stars.add(const Icon(Icons.star_border, color: Colors.amber, size: 20));
-    }
-
-    return Row(children: stars);
   }
 
   Widget _buildProductDetail(ColorScheme colorScheme) {
@@ -523,7 +508,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
                       const SizedBox(height: 6),
                       Text(
-                        'Stok: ${_productData!['stock'] ?? 0}',
+                        'Stok: ${(_productData!['stock'] ?? 0) == 0 ? 'habis' : _productData!['stock']}',
                         style: TextStyle(
                           fontSize: 14,
                           color: colorScheme.tertiary,
@@ -632,6 +617,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildSellerCard(colorScheme),
+                  const SizedBox(height: 50),
                 ],
               ),
             ),
@@ -645,62 +631,95 @@ class _DetailScreenState extends State<DetailScreen> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: colorScheme.secondary.withOpacity(0.2),
-              backgroundImage:
-                  _sellerData != null &&
-                          _sellerData!['profileP'] != null &&
-                          _sellerData!['profileP'].isNotEmpty
-                      ? MemoryImage(base64Decode(_sellerData!['profileP']))
-                      : null,
-              child:
-                  _sellerData == null ||
-                          _sellerData!['profileP'] == null ||
-                          _sellerData!['profileP'].isEmpty
-                      ? Icon(
-                        Icons.person,
-                        size: 30,
-                        color: colorScheme.secondary,
-                      )
-                      : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _sellerData != null && _sellerData!['username'] != null
-                        ? _sellerData!['username']
-                        : _productData!['fullName'] ?? 'Anonim',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.tertiary,
-                      fontFamily: 'playpen',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          // Navigate to SellerProfileScreen
+          final sellerId = _productData!['userId'];
+          if (sellerId != null && sellerId.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => SellerProfileScreen(
+                      sellerId: sellerId, // Document ID from users collection
+                      // Optional: pass seller data if already loaded
+                      sellerData: _sellerData,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _sellerData != null && _sellerData!['address'] != null
-                        ? _formatAddress(_sellerData!['address'])
-                        : _productData!['location'] ??
-                            'Lokasi tidak disebutkan',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      fontFamily: 'playpen',
-                    ),
-                  ),
-                ],
               ),
-            ),
-          ],
+            );
+          } else {
+            // Show error if seller ID is not available
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Informasi penjual tidak tersedia',
+                  style: TextStyle(fontFamily: 'playpen'),
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: colorScheme.secondary.withOpacity(0.2),
+                backgroundImage:
+                    _sellerData != null &&
+                            _sellerData!['profileP'] != null &&
+                            _sellerData!['profileP'].isNotEmpty
+                        ? MemoryImage(base64Decode(_sellerData!['profileP']))
+                        : null,
+                child:
+                    _sellerData == null ||
+                            _sellerData!['profileP'] == null ||
+                            _sellerData!['profileP'].isEmpty
+                        ? Icon(
+                          Icons.person,
+                          size: 30,
+                          color: colorScheme.secondary,
+                        )
+                        : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _sellerData != null && _sellerData!['username'] != null
+                          ? _sellerData!['username']
+                          : _productData!['fullName'] ?? 'Anonim',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.tertiary,
+                        fontFamily: 'playpen',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _sellerData != null && _sellerData!['address'] != null
+                          ? _formatAddress(_sellerData!['address'])
+                          : _productData!['location'] ??
+                              'Lokasi tidak disebutkan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontFamily: 'playpen',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Add arrow icon to indicate it's clickable
+              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+            ],
+          ),
         ),
       ),
     );

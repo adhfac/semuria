@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:semuria/screens/add_review_screen.dart';
 import 'dart:convert';
 
@@ -15,6 +16,27 @@ class ReviewScreen extends StatefulWidget {
 class _ReviewScreenState extends State<ReviewScreen> {
   final reviewCollection = FirebaseFirestore.instance.collection('reviews');
   final userCollection = FirebaseFirestore.instance.collection('users');
+  final productCollection = FirebaseFirestore.instance.collection('products');
+
+  String? currentUserId;
+  String? productOwnerId;
+
+  @override
+  void initState() {
+    super.initState();
+    currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    _loadProductOwner();
+  }
+
+  Future<void> _loadProductOwner() async {
+    final productDoc = await productCollection.doc(widget.productId).get();
+    if (productDoc.exists) {
+      final data = productDoc.data();
+      setState(() {
+        productOwnerId = data?['userId'];
+      });
+    }
+  }
 
   Future<Map<String, dynamic>> _getUserData(String userId) async {
     final doc = await userCollection.doc(userId).get();
@@ -27,6 +49,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
+
+    if (productOwnerId == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -34,13 +61,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
           style: TextStyle(fontFamily: 'playpen'),
         ),
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: theme.onBackground,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          icon: Icon(Icons.arrow_back_ios, color: theme.onBackground),
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -60,7 +82,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
           if (reviews.isEmpty) {
             return const Center(
-              child: Text('Belum ada ulasan untuk produk ini.'),
+              child: Text('Belum ada ulasan untuk produk ini', style: TextStyle(fontFamily: 'playpen'),),
             );
           }
 
@@ -111,11 +133,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     ),
                     title: Text(
                       displayName,
-                      style: TextStyle(fontFamily: 'playpen'),
+                      style: const TextStyle(fontFamily: 'playpen'),
                     ),
                     subtitle: Text(
                       komentar,
-                      style: TextStyle(fontFamily: 'playpen'),
+                      style: const TextStyle(fontFamily: 'playpen'),
                     ),
                     trailing: Text(
                       '⭐ $rating',
@@ -133,29 +155,33 @@ class _ReviewScreenState extends State<ReviewScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => AddReviewScreen(productId: widget.productId),
-            ),
-          );
-          if (result == true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Review berhasil ditambahkan',
-                  style: TextStyle(fontFamily: 'playpen'),
-                ),
-              ),
-            );
-          }
-        },
-        child: const Icon(Icons.add),
-        tooltip: 'Tambah Review',
-      ),
+      floatingActionButton:
+          currentUserId != productOwnerId
+              ? FloatingActionButton(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              AddReviewScreen(productId: widget.productId),
+                    ),
+                  );
+                  if (result == true) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Review berhasil ditambahkan',
+                          style: TextStyle(fontFamily: 'playpen'),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Icon(Icons.add),
+                tooltip: 'Tambah Review',
+              )
+              : null,
     );
   }
 }

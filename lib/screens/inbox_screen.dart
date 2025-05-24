@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:semuria/screens/detail_transaction_screen.dart';
+import 'package:semuria/screens/message_screen.dart';
 
 class InboxScreen extends StatelessWidget {
   final String userIdPenjual;
@@ -37,14 +39,31 @@ class InboxScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: colorScheme.onBackground,
-          ),
+          icon: Icon(Icons.arrow_back_ios, color: colorScheme.onBackground),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => MessageScreen(
+                        userIdPenjual: FirebaseAuth.instance.currentUser!.uid,
+                      ),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.circle_notifications_sharp,
+              color: colorScheme.onPrimary,
+            ),
+            tooltip: 'Lihat review yang masuk',
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: getPendingTransaksi(),
